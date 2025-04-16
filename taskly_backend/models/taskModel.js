@@ -17,11 +17,11 @@ const taskSchema = new Schema({
     },
     status:{
         type: String,
-        enum:["Pending", "Completed"]
+        enum:["pending", "completed"]
     },
     ringType:{
         type: String,
-        enum:["Short", "Long"]
+        enum:["short", "long"]
     },
     radius:{
         type:Number

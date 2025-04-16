@@ -8,11 +8,16 @@ const userSchema = mongoose.Schema({
         type: String,
         unique: true
     },
-    isLoactionPermission:{
+    isLocationPermission:{
         type: Boolean
     },
     isNotificationPermission:{
         type: Boolean
+    },
+    notificationPreference: {
+        type: String,
+        enum: ['location', 'dueDate', 'both'],
+        default: 'both'
     }
 })
 
