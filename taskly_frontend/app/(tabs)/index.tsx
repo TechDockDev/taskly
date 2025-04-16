@@ -21,8 +21,9 @@ const LoginScreen = () => {
     <SafeAreaView style={styles.container}>
       
       <View style={styles.content}>
-        
-        <TasklyLogo />
+        <View style={styles.logoContainer}>
+          <TasklyLogo />
+        </View>
         <View style={styles.formContainer}>
           
           <Text style={styles.heading}>Login</Text>
@@ -62,12 +63,13 @@ const LoginScreen = () => {
 };
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9F9F9" },
-  content: { flex: 1, padding: 30 },
+  content: { flex: 1, padding: 30 , },
   logoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 60,
-    marginTop: 20,
+    marginBottom: 30,
+    marginTop: 50,
+    margin:35
   },
   logoIconContainer: {
     width: 24,
@@ -95,8 +97,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  logoText: { fontSize: 24, fontWeight: "bold", color: "#000" },
-  formContainer: { marginTop: 20 },
+  logoText: { fontSize: 60, fontWeight: "bold", color: "#000" },
+  formContainer: { marginTop: 20 , backgroundColor:"#fff", padding:10, borderRadius:7},
   heading: { fontSize: 28, fontWeight: "bold", marginBottom: 8, color: "#000" },
   subheading: { fontSize: 16, color: "#333", marginBottom: 30 },
   inputContainer: { flexDirection: "row", alignItems: "center" },
