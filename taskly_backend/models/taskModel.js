@@ -6,25 +6,35 @@ const taskSchema = new Schema({
         ref:"User"
     },
     title:{
-        type:String
+        type:String,
+        // required: true
     },
     location:{
-        latitude: String,
-        longitude: String
+        latitude:{
+            type: String,
+            required:true
+        } ,
+        longitude:{
+            type: String,
+            required:true
+        }
     },
     date:{
         type:Date
     },
     status:{
         type: String,
-        enum:["pending", "completed"]
+        enum:["pending", "completed"],
+        default: "pending"
     },
     ringType:{
         type: String,
-        enum:["short", "long"]
+        enum:["short", "long"],
+        default:"short"
     },
     radius:{
-        type:Number
+        type:Number,
+        default:100
     }
 },{timestamps:true});
 
