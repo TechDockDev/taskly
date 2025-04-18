@@ -25,12 +25,12 @@ export const Get_Task_By_Id = async(req, res, next) => {
     try {
         const task = await Task.findOne({ _id: taskId, userId: userId });
         if(!task){
-            return res.status(404).send({success:false, message:"No task found"});
+            return res.status(404).json({success:false, message:"No task found"});
         }
-        return res.status(200).send({success:true,task })
+        return res.status(200).json({success:true,task })
     } catch (error) {
         console.log(error.message);
-        res.status(500).send({success:false, message:"Internal Server Error"});
+        res.status(500).json({success:false, message:"Internal Server Error"});
     }
 }
 
@@ -39,12 +39,12 @@ export const Get_All_Task = async(req, res, next) => {
     try {
         const tasks = await Task.find({userId:userId});
         if(!tasks){
-            return res.status(404).send({success:false, message:"No task Found"});
+            return res.status(404).json({success:false, message:"No task Found"});
         }
-        return res.status(200).send({success:true, tasks});
+        return res.status(200).json({success:true, tasks});
     } catch (error) {
         console.log(error);
-        return res.status(500).send({success:false, message:"Internal Server Error"});
+        return res.status(500).json({success:false, message:"Internal Server Error"});
     }
 }
 
@@ -52,10 +52,10 @@ export const Delete_One_Task = async(req, res, next) => {
     const {taskId} = req.params;
     try {
         const task = await Task.findByIdAndDelete(taskId);
-        return res.status(200).send({success:true, message:"Task deleted successfully"});
+        return res.status(200).json({success:true, message:"Task deleted successfully"});
     } catch (error) {
         console.log(error.message);
-        return res.status(500).send({success:false, message:"Internal server Error"});
+        return res.status(500).json({success:false, message:"Internal server Error"});
     }
 }
 

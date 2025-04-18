@@ -1,5 +1,4 @@
 import User from '../models/userModel.js';
-import express from 'express';
 
 export const Edit_Notification_Preference_Setting = async (req, res) => {
   try {
