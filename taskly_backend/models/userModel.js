@@ -2,22 +2,20 @@ import mongoose, { Schema } from "mongoose";
 
 const userSchema = mongoose.Schema({
     name:{
-        type: String
-    },
-    phoneNumber:{
         type: String,
-        unique: true
+        require: true
     },
-    isLocationPermission:{
-        type: Boolean
-    },
-    isNotificationPermission:{
-        type: Boolean
-    },
-    notificationPreference: {
+    firebaseUid: {
         type: String,
-        enum: ['location', 'dueDate', 'both'],
-        default: 'both'
+        require: true
+    },
+    email:{
+        type: String,
+        unique:true
+    },
+    photo:{
+        type: String,
+        require: true
     }
 })
 
