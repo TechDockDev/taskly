@@ -1,16 +1,17 @@
 import Task from '../models/taskModel.js';
 
 export const Create_New_Task = async(req, res, next) => {
-    const {title, status, location, date, ringType, radius} = req.body;
+    const {title, tag, location, date, ringType, notifyType, radius} = req.body;
     const userId = req.auth.id;
     try {
         const newTask = await Task.create({
             userId:userId,
             title:title,
-            status:status,
+            tag:tag,
             location:location,
             date:date,
             ringType:ringType,
+            notifyType:notifyType,
             radius:radius
         })
         return res.status(200).json({success:true, message:"Data added successfully"})
@@ -27,7 +28,7 @@ export const Get_Task_By_Id = async(req, res, next) => {
         if(!task){
             return res.status(404).json({success:false, message:"No task found"});
         }
-        return res.status(200).json({success:true,task })
+        return res.status(200).json({success:true, task })
     } catch (error) {
         console.log(error.message);
         res.status(500).json({success:false, message:"Internal Server Error"});
@@ -41,7 +42,7 @@ export const Get_All_Task = async(req, res, next) => {
         if(!tasks){
             return res.status(404).json({success:false, message:"No task Found"});
         }
-        return res.status(200).json({success:true, tasks});
+        return res.status(200).json({ success:true, message:"All Tasks", tasks });
     } catch (error) {
         console.log(error);
         return res.status(500).json({success:false, message:"Internal Server Error"});

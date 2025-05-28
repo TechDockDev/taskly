@@ -7,7 +7,11 @@ const taskSchema = new Schema({
     },
     title:{
         type:String,
-        // required: true
+        required: true
+    },
+    tag:{
+        type:String,
+        required:true
     },
     location:{
         latitude:{
@@ -29,8 +33,13 @@ const taskSchema = new Schema({
     },
     ringType:{
         type: String,
-        enum:["short", "long"],
-        default:"short"
+        enum:["once", "repeat"],
+        default:"once",
+    },
+    notifyType:{
+        type: String,
+        enum: ["nearby", "dueDate"], 
+        default: "nearby"
     },
     radius:{
         type:Number,
