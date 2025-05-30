@@ -3,7 +3,16 @@ import mongoose, { Schema } from 'mongoose';
 const taskSchema = new Schema({
     userId:{
         type:mongoose.Types.ObjectId,
-        ref:"User"
+        ref:"User",
+    },
+    guestId:{
+        type: String,
+        // ref:"GuestUser"
+    },
+    userType:{
+        type: String,
+        enum:['main', 'guest'],
+        default: 'main'
     },
     title:{
         type:String,

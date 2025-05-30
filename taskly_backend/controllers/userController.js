@@ -2,7 +2,9 @@ import express from 'express';
 import firebaseAdmin from '../config/firebase.config.js';
 import User from '../models/userModel.js'
 import authToken from '../middleware/authToken.js';
-
+import { v4 as uuidv4 } from 'uuid';
+import guestUserModel from '../models/guestUserModel.js';
+import jwt from 'jsonwebtoken'
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
@@ -33,4 +35,48 @@ export const User_Signout = async (req, res) => {
         .status(200)
         .clearCookie("token")
         .json({ success: true, message: "Successfully Logged Out!" });
-}
+};
+
+export const Guest_Login = async (req, res) => {
+  try {
+    const incomingGuestId = req.body && req.body.incomingGuestId ? req.body.incomingGuestId : undefined;
+    let guestUser;
+    if (incomingGuestId) {
+      guestUser = await guestUserModel.findOne({ guestId: incomingGuestId });
+      if (!guestUser) {
+        const newGuestId = uuidv4();
+        guestUser = await guestUserModel.create({
+          guestId: newGuestId,
+          createdAt: new Date(),
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+        });
+      }
+    } else {
+      const newGuestId = uuidv4();
+      guestUser = await guestUserModel.create({
+        guestId: newGuestId,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), 
+      });
+    }
+    const token = jwt.sign(
+      { guestId: guestUser.guestId, isGuest: true, id: guestUser._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    res.status(200).json({
+      message: 'Guest login successful',
+      user: {
+        id: guestUser._id,
+        guestId: guestUser.guestId,
+        isGuest: true,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error('Guest login error:', err);
+    res.status(500).json({ message: 'Guest login failed' });
+  }
+};
+
+

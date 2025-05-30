@@ -2,21 +2,50 @@ import Task from '../models/taskModel.js';
 
 export const Create_New_Task = async(req, res, next) => {
     const {title, tag, location, date, ringType, notifyType, radius} = req.body;
-    const userId = req.auth.id;
+    const userId = req?.auth?.id;
+    const guestId = req?.guest?.guestId;
     try {
-        const newTask = await Task.create({
-            userId:userId,
-            title:title,
-            tag:tag,
-            location:location,
-            date:date,
-            ringType:ringType,
-            notifyType:notifyType,
-            radius:radius
-        })
-        return res.status(200).json({success:true, message:"Data added successfully"})
+        if (!title || !tag || !location || !location.latitude || !location.longitude) {
+            return res.status(400).json({ success: false, message: "Missing required fields" });
+        }
+        // if (userType === 'main' && !userId) {
+        //     return res.status(401).json({ success: false, message: "Main user ID required" });
+        // }
+        // if (userType === 'guest' && !guestId) {
+        //     return res.status(401).json({ success: false, message: "Guest user ID required" });
+        // }
+
+        const taskData = {
+            title,
+            tag,
+            location,
+            date: date ? new Date(date) : undefined,
+            ringType: ringType || 'once',
+            notifyType: notifyType || 'nearby',
+            radius: radius || 100,
+        };
+
+        if (userId) {
+            taskData.userId = userId;
+        } else {
+            taskData.guestId = guestId;
+            taskData.userType = 'guest'
+        }
+
+        const newTask = await Task.create(taskData);
+        return res.status(201).json({ 
+            success: true, 
+            message: "Task created successfully", 
+            newTask 
+        });
+
     } catch (error) {
-        console.log(error);
+        console.error('Error creating task:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Failed to create task",
+            error: error.message 
+        });
     }
 }
 
