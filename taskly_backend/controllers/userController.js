@@ -1,7 +1,8 @@
-import User from '../models/userModel'
+import User from '../models/userModel.js'
 
-export const Get_Single_User = async () => {
-    const userId = req.auth.id;
+export const Get_Single_User = async (req, res) => {
+    // const userId = req.auth.id;
+    const {userId} = req.params;
     if(!userId){
         return res.status(400).json({message:"No UserId Provided", success:false})
     }
