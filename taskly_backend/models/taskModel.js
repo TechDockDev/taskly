@@ -7,7 +7,6 @@ const taskSchema = new Schema({
     },
     guestId:{
         type: String,
-        // ref:"GuestUser"
     },
     userType:{
         type: String,

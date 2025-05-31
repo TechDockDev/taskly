@@ -5,6 +5,7 @@ import authToken from '../middleware/authToken.js';
 import { v4 as uuidv4 } from 'uuid';
 import guestUserModel from '../models/guestUserModel.js';
 import jwt from 'jsonwebtoken'
+import sendEmail from '../utils/sendEmail.js';
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
@@ -144,5 +145,53 @@ export const User_Register = async (req, res) => {
     return res.status(201).json({message:"User created successfully", success: true, newUser});
   } catch (error) {
     
+  }
+}
+
+export const forgotPassword = async (req, res) => {
+  const {email} = req.body;
+  if(!email){
+    return res.status(400).json({message:"Email is required", success:false});
+  }
+  const user = await User.findOne({email});
+  try {
+    
+    if(!user){
+      return res.status(404).json({message:"User not found", success:false})
+    }
+    const resetToken = user.generateResetPasswordToken();
+    console.log(resetToken);
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const message = `
+      <h3>Hello ${user.name},</h3>
+      <p>You requested a password reset. Please click the link below to reset your password:</p>
+      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
+      <p>This link will expire in 15 minutes.</p>
+    `
+    await sendEmail({
+      to: user.email,
+      subject: "Password Reset Request",
+      html: message
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Reset password link sent to your email"
+    });
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(500).json({
+      success: false,
+      message: "Error sending email",
+      error: error.message
+    });
   }
 }
