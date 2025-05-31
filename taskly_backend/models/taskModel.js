@@ -3,11 +3,23 @@ import mongoose, { Schema } from 'mongoose';
 const taskSchema = new Schema({
     userId:{
         type:mongoose.Types.ObjectId,
-        ref:"User"
+        ref:"User",
+    },
+    guestId:{
+        type: String,
+    },
+    userType:{
+        type: String,
+        enum:['main', 'guest'],
+        default: 'main'
     },
     title:{
         type:String,
-        // required: true
+        required: true
+    },
+    tag:{
+        type:String,
+        required:true
     },
     location:{
         latitude:{
@@ -29,8 +41,13 @@ const taskSchema = new Schema({
     },
     ringType:{
         type: String,
-        enum:["short", "long"],
-        default:"short"
+        enum:["once", "repeat"],
+        default:"once",
+    },
+    notifyType:{
+        type: String,
+        enum: ["nearby", "dueDate"], 
+        default: "nearby"
     },
     radius:{
         type:Number,

@@ -1,33 +1,59 @@
 import Task from '../models/taskModel.js';
 
 export const Create_New_Task = async(req, res, next) => {
-    const {title, status, location, date, ringType, radius} = req.body;
-    const userId = req.auth.id;
+    const {title, tag, location, date, ringType, notifyType, radius} = req.body;
+    // const userId = req?.auth?.id;
+    const userId = '683a9929eaeb4e3259a3da18'
+    const guestId = req?.guest?.guestId;
     try {
-        const newTask = await Task.create({
-            userId:userId,
-            title:title,
-            status:status,
-            location:location,
-            date:date,
-            ringType:ringType,
-            radius:radius
-        })
-        return res.status(200).json({success:true, message:"Data added successfully"})
+        if (!title || !tag || !location || !location.latitude || !location.longitude) {
+            return res.status(400).json({ success: false, message: "Missing required fields" });
+        }
+
+        const taskData = {
+            title,
+            tag,
+            location,
+            date: date ? new Date(date) : undefined,
+            ringType: ringType || 'once',
+            notifyType: notifyType || 'nearby',
+            radius: radius || 100,
+        };
+
+        if (userId) {
+            taskData.userId = userId;
+        } else {
+            taskData.guestId = guestId;
+            taskData.userType = 'guest'
+        }
+
+        const newTask = await Task.create(taskData);
+        return res.status(201).json({ 
+            success: true, 
+            message: "Task created successfully", 
+            newTask 
+        });
+
     } catch (error) {
-        console.log(error);
+        console.error('Error creating task:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: "Failed to create task",
+            error: error.message 
+        });
     }
 }
 
 export const Get_Task_By_Id = async(req, res, next) => {
     const {taskId} = req.params;
-    const userId = req.auth.id;
+    // const userId = req.auth.id;
+    const userId = '683a9929eaeb4e3259a3da18'
     try {
         const task = await Task.findOne({ _id: taskId, userId: userId });
         if(!task){
             return res.status(404).json({success:false, message:"No task found"});
         }
-        return res.status(200).json({success:true,task })
+        return res.status(200).json({success:true, task })
     } catch (error) {
         console.log(error.message);
         res.status(500).json({success:false, message:"Internal Server Error"});
@@ -35,13 +61,24 @@ export const Get_Task_By_Id = async(req, res, next) => {
 }
 
 export const Get_All_Task = async(req, res, next) => {
-    const userId = req.auth.id;
+    // const userId = req.auth.id;
+    const userId = '683a9929eaeb4e3259a3da18';
     try {
         const tasks = await Task.find({userId:userId});
+        console.log('Tasks---->', tasks);
         if(!tasks){
             return res.status(404).json({success:false, message:"No task Found"});
         }
-        return res.status(200).json({success:true, tasks});
+        const totalTask = tasks.length;
+        const countCompleted = await Task.countDocuments({ status: "completed" });
+
+        const stats = {
+            totalTask,
+            completed: countCompleted,
+            pending: totalTask-countCompleted
+        }
+
+        return res.status(200).json({ success:true, message:"All Tasks", tasks, stats });
     } catch (error) {
         console.log(error);
         return res.status(500).json({success:false, message:"Internal Server Error"});
@@ -52,7 +89,7 @@ export const Delete_One_Task = async(req, res, next) => {
     const {taskId} = req.params;
     try {
         const task = await Task.findByIdAndDelete(taskId);
-        return res.status(200).json({success:true, message:"Task deleted successfully"});
+        return res.status(200).json({success:true, message:"Task deleted successfully", task});
     } catch (error) {
         console.log(error.message);
         return res.status(500).json({success:false, message:"Internal server Error"});
