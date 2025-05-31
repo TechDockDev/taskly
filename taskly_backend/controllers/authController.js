@@ -30,6 +30,17 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
   }
 };
 
+export const Dummy_Sign = async (req,res) => {
+  const {email, name} = req.body;
+  const newUser = await User.create({
+    firebaseUid: '1234464',
+    email,
+    name,
+    photo: 'https://unsplash.com',
+  })
+  return res.status(200).json({message:"Hurrah! New user created", success:true, newUser});
+}
+
 export const User_Signout = async (req, res) => {
     res
         .status(200)
@@ -79,4 +90,59 @@ export const Guest_Login = async (req, res) => {
   }
 };
 
+export const User_Login = async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide both email and password"
+    });
+  }
+  try {
+    const user = await User.findOne({ email });
 
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    const isPasswordCorrect = await user.isMatch(password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+    authToken.userSendToken(user, 200, res, "login");
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
+export const User_Register = async (req, res) => {
+  const {name, email, password} = req.body;
+  if(!name || !email || !password){
+    return res.status(400).json({message:"Provide all fields", success:false});
+  }
+  try {
+    //check existing user
+    const userExist = await User.findOne({email});
+    if(userExist){
+      return res.status(400).json({message:"User already Exists", success: false});
+    }
+    const newUser = await User.create({
+      name,
+      email,
+      password
+    })
+    return res.status(201).json({message:"User created successfully", success: true, newUser});
+  } catch (error) {
+    
+  }
+}
