@@ -37,40 +37,54 @@ export const Delete_User = async (req, res) => {
 }
 
 export const Update_User_Image = async (req, res) => {
-
-    // const userId = req?.auth?.id;
-    const userId = '683e9ffe0f487a7758d1eaad';
-
+    const userId = req?.auth?.id;
     if (!req.file || !req.file.path || !req.file.filename) {
         return res.status(400).json({ error: "No image uploaded" });
     }
-    // try {
-    const userData = await User.findById(userId);
-    if (userData?.photo?.public_id) {
-        const result = await cloudinary.uploader.destroy(userData.photo.public_id);
-        console.log(result);
-    }
+    try {
+        const userData = await User.findById(userId);
+        if (userData?.photo?.public_id) {
+            const result = await cloudinary.uploader.destroy(userData.photo.public_id);
+            console.log(result);
+        }
 
-    const imageUrl = req.file.path;
-    console.log('Image Url----->', imageUrl);
-    const imagePublicId = req.file.filename;
-    console.log('Image Public Id----->', imagePublicId);
+        const imageUrl = req.file.path;
+        const imagePublicId = req.file.filename;
 
-
-    const user = await User.findByIdAndUpdate(
-        userId,
-        {
-            photo: {
-                url: imageUrl,
-                public_id: imagePublicId,
+        const user = await User.findByIdAndUpdate(
+            userId,
+            {
+                photo: {
+                    url: imageUrl,
+                    public_id: imagePublicId,
+                },
             },
-        },
-        { new: true }
-    );
-    console.log('USer after photo---->', user);
-    return res.status(200).json({ message: "Photos uploaded successfully", success: true, user })
-    // } catch (error) {
-    //     console.log(error);
-    //     res.status(500).json({message:"Internal Server Error"});
-    // }
+            { new: true }
+        );
+        return res.status(200).json({ message: "Photos uploaded successfully", success: true, user })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+export const Update_Username = async (req, res) =>{
+    const userId = req.auth.id;
+    const {name} = req.body;
+    if(!name){
+        return res.status(400).json({message:"Provide Valid Name", success:false});
+    }
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                name
+            }, {new:true}
+        )
+        return res.status(200).json({ message:"Name updated succesfully", success:true,updatedUser });
+
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({message:"Internal Server Error", success: false});
+    }
 }
