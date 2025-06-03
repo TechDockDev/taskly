@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import {User_SignIn_Or_SignUp, User_Login, User_Register, forgotPassword} from '../controllers/authController.js';
-import { Get_Single_User, Delete_User, Update_User_Image, Update_Username } from "../controllers/userController.js";
+import { Get_Single_User, Delete_User, Update_User_Image, Update_Username, Remove_Tag_From_User, Add_Tag_To_User } from "../controllers/userController.js";
 import authToken from "../middleware/authToken.js";
 import upload from "../middleware/upload.js";
 
@@ -15,10 +15,13 @@ router.route('/sign-up').post(User_Register)
 router.route('/forgot-password').post(forgotPassword)
 // ====================================================================
 
+
 // ============================= User Routes ==========================
 router.route('/getUser/:userId').get(
+    authToken.isAuthenticated,
     Get_Single_User
 );
+
 router.route('/delete-user').post(
     authToken.isAuthenticated, 
     Delete_User
@@ -34,5 +37,16 @@ router.route('/update/name').put(
     authToken.isAuthenticated,
     Update_Username
 )
+
+router.route('/add-tag').post(
+    authToken.isAuthenticated,
+    Add_Tag_To_User
+)
+
+router.route('/remove-tag').post(
+    authToken.isAuthenticated,
+    Remove_Tag_From_User
+)
 // =====================================================================
+
 export default router;

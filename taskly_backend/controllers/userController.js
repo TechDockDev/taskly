@@ -68,23 +68,82 @@ export const Update_User_Image = async (req, res) => {
     }
 }
 
-export const Update_Username = async (req, res) =>{
+export const Update_Username = async (req, res) => {
     const userId = req.auth.id;
-    const {name} = req.body;
-    if(!name){
-        return res.status(400).json({message:"Provide Valid Name", success:false});
+    const { name } = req.body;
+    if (!name) {
+        return res.status(400).json({ message: "Provide Valid Name", success: false });
     }
     try {
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             {
                 name
-            }, {new:true}
+            }, { new: true }
         )
-        return res.status(200).json({ message:"Name updated succesfully", success:true,updatedUser });
+        return res.status(200).json({ message: "Name updated succesfully", success: true, updatedUser });
 
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({message:"Internal Server Error", success: false});
+        res.status(500).json({ message: "Internal Server Error", success: false });
+    }
+}
+
+export const Add_Tag_To_User = async (req, res) => {
+    const userId = req.auth.id;
+    const { tag } = req.body;
+
+    if (!userId || !tag) {
+        return res.status(400).json({ message: "userId and tag are required", success: false });
+    }
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $addToSet: { tags: tag } },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        res.status(200).json({
+            message: "Tag added successfully (if not already present)",
+            tags: updatedUser.tags
+        });
+    } catch (error) {
+        console.error("Error adding tag:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const Remove_Tag_From_User = async (req, res) => {
+    const userId = req.auth.id;
+    const { tag } = req.body;
+
+    if (!userId || !tag) {
+        return res.status(400).json({ message: "userId and tag are required", success: false });
+    }
+
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { $pull: { tags: tag } },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found", success:false });
+        }
+
+        res.status(200).json({
+            message: "Tag removed successfully (if it existed)",
+            success: true,
+            tags: updatedUser.tags
+        });
+    } catch (error) {
+        console.error("Error removing tag:", error);
+        res.status(500).json({ message: "Internal server error", success: false });
     }
 }
