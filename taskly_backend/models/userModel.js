@@ -25,6 +25,10 @@ const userSchema = new Schema({
             type: String,
         }
     },
+    tags: {
+        type: [String],
+        default: []
+    },
     resetPasswordToken:{
         type: String,
     },
