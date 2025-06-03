@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken'
 import User from '../models/userModel.js'
-import GuestUser from '../models/guestUserModel.js'
 
 const authToken = {
     //Token Generation
@@ -47,6 +46,7 @@ const authToken = {
         const authHeader = req.headers['authorization'];
         const tokenFromHeader = authHeader && authHeader.split(' ')[1];
         token = token || tokenFromHeader;
+        console.log('tomken-->', token);
 
         if (!token) {
             res.status(401).json({ message: "Unauthorized" })
@@ -55,12 +55,9 @@ const authToken = {
         console.log('userId=>', decoded.id)
         let userCheck;
         userCheck = await User.findById(decoded.id)
-        let guestCheck;
-        guestCheck = await GuestUser.findOne({guestId:decoded.guestId})
+        console.log('UserDATA---->', userCheck)
         if (userCheck) {
             req.auth = userCheck;
-        }else if(guestCheck){
-            req.guest = guestCheck
         }
         else {
             return res.status(401).json({ message: "Please login again" })
