@@ -5,7 +5,10 @@ import {
     Get_All_Task, 
     Delete_One_Task, 
     Update_Task, 
-    Task_Stats
+    Task_Stats,
+    Upcoming_Task_Priority,
+    Check_User_Task_Radius,
+    Search_User_Task
 } from '../controllers/taskController.js'
 import authToken from "../middleware/authToken.js";
 
@@ -35,6 +38,21 @@ router.route('/updateTask/:taskId').put(
 router.route('/stats').get(
     authToken.isAuthenticated,
     Task_Stats
+)
+
+router.route('/priority').get(
+    authToken.isAuthenticated,
+    Upcoming_Task_Priority
+)
+
+router.route('/check-status').post(
+    // authToken.isAuthenticated,
+    Check_User_Task_Radius
+)
+
+router.route('/search').get(
+    authToken.isAuthenticated,
+    Search_User_Task
 )
 
 export default router;
