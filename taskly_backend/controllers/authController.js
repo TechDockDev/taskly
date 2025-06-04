@@ -9,6 +9,7 @@ import sendEmail from '../utils/sendEmail.js';
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
     const { idToken } = req.body;
+    console.log("Request Body Signin--->", req.body);
     console.log('idtoken----->', idToken);
     const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
     console.log('decodedToken--->', decodedToken);

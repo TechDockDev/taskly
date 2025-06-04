@@ -16,23 +16,23 @@ const taskSchema = new Schema({
     location:{
         latitude:{
             type: String,
-            required:true
+            // required:true
         } ,
         longitude:{
             type: String,
-            required:true
+            // required:true
         }
     },
     address:{
         type:String,
-        required: true
+        // required: true
     },
     dueDateTime:{
         type:Date
     },
     status:{
         type: String,
-        enum:["pending", "completed"],
+        enum:["pending", "completed", "overdue"],
         default: "pending"
     },
     ringType:{
