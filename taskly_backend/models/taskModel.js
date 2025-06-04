@@ -5,14 +5,6 @@ const taskSchema = new Schema({
         type:mongoose.Types.ObjectId,
         ref:"User",
     },
-    guestId:{
-        type: String,
-    },
-    userType:{
-        type: String,
-        enum:['main', 'guest'],
-        default: 'main'
-    },
     title:{
         type:String,
         required: true
@@ -31,7 +23,11 @@ const taskSchema = new Schema({
             required:true
         }
     },
-    date:{
+    address:{
+        type:String,
+        required: true
+    },
+    dueDateTime:{
         type:Date
     },
     status:{
