@@ -5,6 +5,10 @@ const notificationSchema = new Schema({
         type: mongoose.Types.ObjectId,
         ref:'User'
     },
+    taskId:{
+        type: mongoose.Types.ObjectId,
+        ref:'Task'
+    },
     message:{
         type: String,
         required: true
