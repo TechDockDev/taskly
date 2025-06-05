@@ -10,6 +10,7 @@ import {
     Check_User_Task_Radius,
     Search_User_Task
 } from '../controllers/taskController.js'
+import { Create_Notification, Get_User_Notifications } from '../controllers/notificationController.js'
 import authToken from "../middleware/authToken.js";
 
 const router = Router();
@@ -53,6 +54,19 @@ router.route('/check-status').post(
 router.route('/search').get(
     authToken.isAuthenticated,
     Search_User_Task
+)
+
+
+// ==================== Notification Routes ==================
+
+router.route('/create-notification').post(
+    // authToken.isAuthenticated,
+    Create_Notification
+)
+
+router.route('/get-notifications').get(
+    // authToken.isAuthenticated,
+    Get_User_Notifications
 )
 
 export default router;
