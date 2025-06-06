@@ -2,26 +2,35 @@ import express from 'express';
 import firebaseAdmin from '../config/firebase.config.js';
 import User from '../models/userModel.js'
 import authToken from '../middleware/authToken.js';
-import jwt from 'jsonwebtoken'
 import sendEmail from '../utils/sendEmail.js';
 
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, fcmToken, photo } = req.body;
     console.log("Request Body Signin--->", req.body);
     console.log('idtoken----->', idToken);
+    console.log('FCMtoken---->', fcmToken);
     const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
     console.log('decodedToken--->', decodedToken);
     const { uid, email, name, picture } = decodedToken;
-    let user = await User.findOne({ firebaseUid: uid });
+    let user = await User.findOne({ email });
     if (!user) {
       user = await User.create({
         firebaseUid: uid,
         email,
         name,
-        photo: {url: picture || ""},
+        photo: { url: picture || "" },
       });
+    } else {
+      if (fcmToken) {
+        user = await User.findByIdAndUpdate(
+          user._id,
+          {
+            fcmToken
+          }, {new:true}
+        )
+      }
     }
     await authToken.userSendToken(user, 200, res, "login");
   } catch (error) {
@@ -34,10 +43,17 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
 };
 
 export const User_Signout = async (req, res) => {
-    res
-        .status(200)
-        .clearCookie("token")
-        .json({ success: true, message: "Successfully Logged Out!" });
+  const userId = req.auth.id;
+  const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { fcmToken: "" },
+      { new: true }
+    );
+  console.log('Logged Out USer--->', updateUser);
+  res
+    .status(200)
+    .clearCookie("token")
+    .json({ success: true, message: "Successfully Logged Out!" });
 };
 
 export const User_Login = async (req, res) => {
@@ -76,37 +92,37 @@ export const User_Login = async (req, res) => {
 };
 
 export const User_Register = async (req, res) => {
-  const {name, email, password} = req.body;
-  if(!name || !email || !password){
-    return res.status(400).json({message:"Provide all fields", success:false});
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "Provide all fields", success: false });
   }
   try {
     //check existing user
-    const userExist = await User.findOne({email});
-    if(userExist){
-      return res.status(400).json({message:"User already Exists", success: false});
+    const userExist = await User.findOne({ email });
+    if (userExist) {
+      return res.status(400).json({ message: "User already Exists", success: false });
     }
     const newUser = await User.create({
       name,
       email,
       password
     })
-    return res.status(201).json({message:"User created successfully", success: true, newUser});
+    return res.status(201).json({ message: "User created successfully", success: true, newUser });
   } catch (error) {
-    
+
   }
 }
 
 export const forgotPassword = async (req, res) => {
-  const {email} = req.body;
-  if(!email){
-    return res.status(400).json({message:"Email is required", success:false});
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: "Email is required", success: false });
   }
-  const user = await User.findOne({email});
+  const user = await User.findOne({ email });
   try {
-    
-    if(!user){
-      return res.status(404).json({message:"User not found", success:false})
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found", success: false })
     }
     const resetToken = user.generateResetPasswordToken();
     console.log(resetToken);

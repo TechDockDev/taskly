@@ -45,6 +45,9 @@ const taskSchema = new Schema({
         enum: ["nearby", "dueDate"], 
         default: "nearby"
     },
+    notifyAt:{
+        type:Date,
+    },
     radius:{
         type:Number,
         default:100
