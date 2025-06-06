@@ -16,16 +16,14 @@ const taskSchema = new Schema({
     location:{
         latitude:{
             type: String,
-            // required:true
-        } ,
+        },
         longitude:{
             type: String,
-            // required:true
         }
     },
     address:{
         type:String,
-        // required: true
+        required: true
     },
     dueDateTime:{
         type:Date

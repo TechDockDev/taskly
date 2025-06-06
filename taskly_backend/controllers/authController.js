@@ -8,11 +8,7 @@ import sendEmail from '../utils/sendEmail.js';
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
     const { idToken, fcmToken, photo } = req.body;
-    console.log("Request Body Signin--->", req.body);
-    console.log('idtoken----->', idToken);
-    console.log('FCMtoken---->', fcmToken);
     const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
-    console.log('decodedToken--->', decodedToken);
     const { uid, email, name, picture } = decodedToken;
     let user = await User.findOne({ email });
     if (!user) {
@@ -20,7 +16,7 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
         firebaseUid: uid,
         email,
         name,
-        photo: { url: picture || "" },
+        photo: { url: picture || photo || "" },
       });
     } else {
       if (fcmToken) {
@@ -49,7 +45,6 @@ export const User_Signout = async (req, res) => {
       { fcmToken: "" },
       { new: true }
     );
-  console.log('Logged Out USer--->', updateUser);
   res
     .status(200)
     .clearCookie("token")
@@ -97,7 +92,6 @@ export const User_Register = async (req, res) => {
     return res.status(400).json({ message: "Provide all fields", success: false });
   }
   try {
-    //check existing user
     const userExist = await User.findOne({ email });
     if (userExist) {
       return res.status(400).json({ message: "User already Exists", success: false });
@@ -109,9 +103,10 @@ export const User_Register = async (req, res) => {
     })
     return res.status(201).json({ message: "User created successfully", success: true, newUser });
   } catch (error) {
-
+    console.log('Error in Register User: ', error.message);
+    res.status(500).json({message:"Internal server Error", success:false});
   }
-}
+};
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -120,7 +115,6 @@ export const forgotPassword = async (req, res) => {
   }
   const user = await User.findOne({ email });
   try {
-
     if (!user) {
       return res.status(404).json({ message: "User not found", success: false })
     }

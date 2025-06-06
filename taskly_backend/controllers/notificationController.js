@@ -1,8 +1,7 @@
 import Notification from "../models/notificationModel.js";
 
 export const Create_Notification = async (req, res) => {
-    // const userId = req.auth.id;
-    const userId = '683e9ffe0f487a7758d1eaad';
+    const userId = req?.auth?.id;
     const { message } = req.body;
     try {
         const userMessage = await Notification.create({
@@ -22,9 +21,7 @@ export const Create_Notification = async (req, res) => {
 }
 
 export const Get_User_Notifications = async (req, res) => {
-
-    // const userId = req.auth.id;
-    const userId = '684171d5d90e045cc871c7d8';
+    const userId = req?.auth?.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
