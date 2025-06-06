@@ -24,7 +24,7 @@ router.route('/getUser/:userId').get(
 );
 
 router.route('/delete-user').delete(
-    // authToken.isAuthenticated, 
+    authToken.isAuthenticated, 
     Delete_User
 );
 

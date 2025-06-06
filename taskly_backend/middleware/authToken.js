@@ -46,16 +46,12 @@ const authToken = {
         const authHeader = req.headers['authorization'];
         const tokenFromHeader = authHeader && authHeader.split(' ')[1];
         token = token || tokenFromHeader;
-        // console.log('tomken-->', token);
-
         if (!token) {
             res.status(401).json({ message: "Unauthorized" })
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        // console.log('userId=>', decoded.id)
         let userCheck;
         userCheck = await User.findById(decoded.id)
-        // console.log('UserDATA---->', userCheck)
         if (userCheck) {
             req.auth = userCheck;
         }

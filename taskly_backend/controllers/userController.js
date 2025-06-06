@@ -4,7 +4,6 @@ import Task from '../models/taskModel.js';
 import { v2 as cloudinary } from 'cloudinary'
 
 export const Get_Single_User = async (req, res) => {
-    // const userId = req.auth.id;
     const { userId } = req.params;
     if (!userId) {
         return res.status(400).json({ message: "No UserId Provided", success: false })
@@ -22,8 +21,7 @@ export const Get_Single_User = async (req, res) => {
 }
 
 export const Delete_User = async (req, res) => {
-    // const userId = req.auth.id;
-    const userId = '683a9929eaeb4e3259a3da18';
+    const userId = req?.auth?.id;
     try {
         const [deletedTask, deletedUser] = await Promise.all([
             Task.deleteMany({ userId: userId }),
@@ -63,13 +61,13 @@ export const Update_User_Image = async (req, res) => {
         );
         return res.status(200).json({ message: "Photos uploaded successfully", success: true, user })
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Internal Server Error" });
+        console.log(error.message);
+        res.status(500).json({ message: "Internal Server Error", success: false });
     }
 }
 
 export const Update_Username = async (req, res) => {
-    const userId = req.auth.id;
+    const userId = req?.auth?.id;
     const { name } = req.body;
     if (!name) {
         return res.status(400).json({ message: "Provide Valid Name", success: false });
@@ -90,7 +88,7 @@ export const Update_Username = async (req, res) => {
 }
 
 export const Add_Tag_To_User = async (req, res) => {
-    const userId = req.auth.id;
+    const userId = req?.auth?.id;
     const { tag } = req.body;
 
     if (!userId || !tag) {
@@ -119,7 +117,7 @@ export const Add_Tag_To_User = async (req, res) => {
 }
 
 export const Remove_Tag_From_User = async (req, res) => {
-    const userId = req.auth.id;
+    const userId = req?.auth?.id;
     const { tag } = req.body;
 
     if (!userId || !tag) {
@@ -149,8 +147,7 @@ export const Remove_Tag_From_User = async (req, res) => {
 }
 
 export const Get_All_Tag_Of_User = async (req, res) => {
-    const userId = req.auth.id;
-
+    const userId = req?.auth?.id;
     try {
         const user = await User.findById(userId);
         if (!user) {

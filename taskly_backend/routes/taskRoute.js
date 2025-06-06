@@ -47,7 +47,7 @@ router.route('/priority').get(
 )
 
 router.route('/check-status').post(
-    // authToken.isAuthenticated,
+    authToken.isAuthenticated,
     Check_User_Task_Radius
 )
 
@@ -60,12 +60,12 @@ router.route('/search').get(
 // ==================== Notification Routes ==================
 
 router.route('/create-notification').post(
-    // authToken.isAuthenticated,
+    authToken.isAuthenticated,
     Create_Notification
 )
 
 router.route('/get-notifications').get(
-    // authToken.isAuthenticated,
+    authToken.isAuthenticated,
     Get_User_Notifications
 )
 

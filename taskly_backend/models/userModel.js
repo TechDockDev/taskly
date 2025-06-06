@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 const userSchema = new Schema({
     name: {
         type: String,
-        default:"User"
+        required: true,
     },
     firebaseUid: {
         type: String,
@@ -12,7 +12,8 @@ const userSchema = new Schema({
     },
     email: {
         type: String,
-        unique: true
+        unique: true,
+        required: true
     },
     password: {
         type: String,
@@ -31,7 +32,7 @@ const userSchema = new Schema({
     },
     fcmToken: {
         type: String,
-        // required: true
+        required: true
     }
 });
 

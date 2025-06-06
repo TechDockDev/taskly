@@ -7,8 +7,7 @@ import { scheduleNotification } from '../utils/scheduler.js';
 
 export const Create_New_Task = async (req, res, next) => {
     const { title, tag, location, date, ringType, notifyType, radius, address } = req.body;
-    // const userId = req?.auth?.id;
-    const userId = '684171d5d90e045cc871c7d8'
+    const userId = req?.auth?.id;
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -18,7 +17,6 @@ export const Create_New_Task = async (req, res, next) => {
             const due = new Date(date);
             // notifyAt = new Date(due.getTime() - 12 * 60 * 60 * 1000);
             notifyAt = new Date(due.getTime()-1 * 60 * 1000)
-            console.log('NotifyTime--->', notifyAt)
         }
         const taskData = {
             title,
@@ -71,7 +69,6 @@ export const Get_Task_By_Id = async (req, res, next) => {
 
 export const Get_All_Task = async (req, res, next) => {
     const userId = req?.auth?.id;
-    // const userId = '683e9ffe0f487a7758d1eaad'
     const { status } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -180,7 +177,7 @@ export const Update_Task = async (req, res, next) => {
 }
 
 export const Task_Stats = async (req, res, next) => {
-    const userId = req.auth.id;
+    const userId = req?.auth?.id;
     try {
         const totalTask = await Task.countDocuments({ userId: userId });
         const countCompleted = await Task.countDocuments({ userId: userId, status: "completed" });
@@ -198,9 +195,8 @@ export const Task_Stats = async (req, res, next) => {
 
 export const Upcoming_Task_Priority = async (req, res, next) => {
     const userId = req?.auth?.id;
-    // const userId = '683e9ffe0f487a7758d1eaad'
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     try {
         const tasks = await Task.find({
@@ -219,14 +215,14 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
             totalTasks
         })
     } catch (error) {
-        console.log('Error in Task Priority ', error.message)
+        console.log('Error in Task Priority ', error.message);
+        res.status(500).json({message:"Internal Server Error", success: false});
     }
 }
 
 export const Check_User_Task_Radius = async (req, res, next) => {
     const { latitude, longitude } = req.body;
-    // const userId = req?.auth?.id;
-    const userId = '684171d5d90e045cc871c7d8';
+    const userId = req?.auth?.id;
     const user = await User.findById(userId);
     try {
         const tasks = await Task.find({ userId: userId, status: 'pending', notifyType: 'nearby' });
@@ -245,8 +241,6 @@ export const Check_User_Task_Radius = async (req, res, next) => {
                         body: messageBody,
                     },
                 });
-                console.log('Message Id--->', messageId);
-                console.log(`User is within ${task.title} radius`);
                 const notify = await Notification.create({
                     userId,
                     taskId: task._id,
@@ -267,8 +261,9 @@ export const Check_User_Task_Radius = async (req, res, next) => {
 export const Search_User_Task = async (req, res) => {
     try {
         const userId = req.auth?.id;
-        const { query = '', page = 1 } = req.query;
-        const limit = 5;
+        const { query = ''} = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
         const searchRegex = new RegExp(query, 'i');
