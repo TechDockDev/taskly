@@ -29,11 +29,9 @@ const userSchema = new Schema({
         type: [String],
         default: []
     },
-    resetPasswordToken:{
+    fcmToken: {
         type: String,
-    },
-    resetPasswordExpire: {
-        type: Date
+        // required: true
     }
 });
 
