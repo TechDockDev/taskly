@@ -32,7 +32,7 @@ const userSchema = new Schema({
     },
     fcmToken: {
         type: String,
-        required: true
+       // required: true
     }
 });
 
