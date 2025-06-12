@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import {User_SignIn_Or_SignUp, User_Login, User_Register, forgotPassword, User_Signout} from '../controllers/authController.js';
-import { Get_Single_User, Delete_User, Update_User_Image, Update_Username, Remove_Tag_From_User, Add_Tag_To_User, Get_All_Tag_Of_User } from "../controllers/userController.js";
+import { Get_Single_User, Delete_User, Update_User_Image, Update_Username, Remove_Tag_From_User, Add_Tag_To_User, Get_All_Tag_Of_User, Delete_User_Image } from "../controllers/userController.js";
 import authToken from "../middleware/authToken.js";
 import upload from "../middleware/upload.js";
 
@@ -32,6 +32,11 @@ router.route('/update/profile-image').post(
     authToken.isAuthenticated, 
     upload.single("image"), 
     Update_User_Image
+)
+
+router.route('/delete/profile-image').delete(
+    // authToken.isAuthenticated,
+    Delete_User_Image
 )
 
 router.route('/update/name').put(
