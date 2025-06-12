@@ -66,6 +66,31 @@ export const Update_User_Image = async (req, res) => {
     }
 }
 
+export const Delete_User_Image = async (req, res) => {
+    // const userId = req.auth.id;
+    const userId = '683e9ffe0f487a7758d1eaad';
+    try {
+        const userData = await User.findById(userId);
+        if (userData?.photo?.public_id) {
+            const result = await cloudinary.uploader.destroy(userData.photo.public_id);
+            console.log(result);
+        }
+        const updatedUser = await User.findByIdAndUpdate(userId, 
+            {
+                photo: {
+                    url: '',
+                    public_id: '',
+                },
+            },
+            { new: true }
+        )
+        return res.status(200).json({message:"Profile Image Deleted Successfully", success:true});
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({message:"Internal Server Error", success:false});
+    }
+}
+
 export const Update_Username = async (req, res) => {
     const userId = req?.auth?.id;
     const { name } = req.body;

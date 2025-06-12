@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 const userSchema = new Schema({
     name: {
         type: String,
-        required: true,
+        // required: true,
     },
     firebaseUid: {
         type: String,
