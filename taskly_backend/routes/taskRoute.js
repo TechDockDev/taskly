@@ -32,7 +32,7 @@ router.route('/deleteTask/:taskId').delete(
     Delete_One_Task
 )
 router.route('/updateTask/:taskId').put(
-    // authToken.isAuthenticated, 
+    authToken.isAuthenticated, 
     Update_Task
 )
 

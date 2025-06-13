@@ -165,15 +165,11 @@ export const Delete_One_Task = async (req, res, next) => {
 
 export const Update_Task = async (req, res, next) => {
     const { taskId } = req.params;
-    // const userId = req?.auth.id;
-    const userId = '684ad628bbc58354f55f40c8';
+    const userId = req?.auth.id;
     const updates = req.body;
-    console.log("Req body-->",req.body.fcmToken);
-    console.log("Updates===>", updates)
-    // try {
+    try {
         const fcmToken = req.body.fcmToken;
         if(fcmToken){
-            console.log('Yahaaa');
             const userData = await User.findByIdAndUpdate(userId,
                 {fcmToken},
                 { new: true }
@@ -188,10 +184,10 @@ export const Update_Task = async (req, res, next) => {
             message: 'Task updated successfully',
             updatedTask,
         });
-    // } catch (error) {
-    //     console.error('Error updating task:', err);
-    //     return res.status(500).json({ success: false, message: 'Server error' });
-    // }
+    } catch (error) {
+        console.error('Error updating task:', err);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
 }
 
 export const Task_Stats = async (req, res, next) => {
