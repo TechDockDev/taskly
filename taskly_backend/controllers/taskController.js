@@ -6,7 +6,7 @@ import firebaseAdmin from '../config/firebase.config.js';
 import { scheduleNotification } from '../utils/scheduler.js';
 
 export const Create_New_Task = async (req, res, next) => {
-    const { title, tag, location, date, ringType, notifyType, radius, address } = req.body;
+    const { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
     const userId = req?.auth?.id;
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
@@ -17,6 +17,12 @@ export const Create_New_Task = async (req, res, next) => {
             const due = new Date(date);
             // notifyAt = new Date(due.getTime() - 12 * 60 * 60 * 1000);
             notifyAt = new Date(due.getTime()-1 * 60 * 1000)
+        }
+        if(fcmToken){
+            const userData = await User.findByIdAndUpdate(userId,
+                {fcmToken},
+                { new: true }
+            );
         }
         const taskData = {
             title,
@@ -159,8 +165,20 @@ export const Delete_One_Task = async (req, res, next) => {
 
 export const Update_Task = async (req, res, next) => {
     const { taskId } = req.params;
+    // const userId = req?.auth.id;
+    const userId = '684ad628bbc58354f55f40c8';
     const updates = req.body;
-    try {
+    console.log("Req body-->",req.body.fcmToken);
+    console.log("Updates===>", updates)
+    // try {
+        const fcmToken = req.body.fcmToken;
+        if(fcmToken){
+            console.log('Yahaaa');
+            const userData = await User.findByIdAndUpdate(userId,
+                {fcmToken},
+                { new: true }
+            )
+        }
         const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
             new: true,
             runValidators: true,
@@ -170,10 +188,10 @@ export const Update_Task = async (req, res, next) => {
             message: 'Task updated successfully',
             updatedTask,
         });
-    } catch (error) {
-        console.error('Error updating task:', err);
-        return res.status(500).json({ success: false, message: 'Server error' });
-    }
+    // } catch (error) {
+    //     console.error('Error updating task:', err);
+    //     return res.status(500).json({ success: false, message: 'Server error' });
+    // }
 }
 
 export const Task_Stats = async (req, res, next) => {
