@@ -7,8 +7,8 @@ import { scheduleNotification, cancelNotification } from '../utils/scheduler.js'
 
 export const Create_New_Task = async (req, res, next) => {
     const { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
-    // const userId = req?.auth?.id;
-    const userId = '684ad628bbc58354f55f40c8';
+    const userId = req?.auth?.id;
+    // const userId = '684ad628bbc58354f55f40c8';
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -167,8 +167,8 @@ export const Delete_One_Task = async (req, res, next) => {
 
 export const Update_Task = async (req, res, next) => {
     const { taskId } = req.params;
-    // const userId = req?.auth.id;
-    const userId = '684ad628bbc58354f55f40c8'
+    const userId = req?.auth.id;
+    // const userId = '684ad628bbc58354f55f40c8'
     const updates = req.body;
     console.log("Updatessssss--->",updates);
     console.log('Update time-->', updates.dueDateTime);
