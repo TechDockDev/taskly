@@ -15,9 +15,12 @@ export const Create_New_Task = async (req, res, next) => {
         }
         let notifyAt = null;
         if(date && notifyType == 'dueDate' ){
-            const due = new Date(date);
+		console.log("bodyyy->>",req.body)
+           // const due = new Date(date);
             // notifyAt = new Date(due.getTime() - 12 * 60 * 60 * 1000);
-            notifyAt = new Date(due.getTime()-1 * 60 * 1000)
+           // notifyAt = new Date(due.getTime()-1 * 60 * 1000)
+	   notifyAt = date;
+		console.log("hars-->",notifyAt)
         }
         if(fcmToken){
             const userData = await User.findByIdAndUpdate(userId,
