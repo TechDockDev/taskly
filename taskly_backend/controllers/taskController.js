@@ -3,11 +3,12 @@ import User from '../models/userModel.js';
 import Notification from '../models/notificationModel.js';
 import haversine from 'haversine-distance';
 import firebaseAdmin from '../config/firebase.config.js';
-import { scheduleNotification } from '../utils/scheduler.js';
+import { scheduleNotification, cancelNotification } from '../utils/scheduler.js';
 
 export const Create_New_Task = async (req, res, next) => {
     const { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
-    const userId = req?.auth?.id;
+    // const userId = req?.auth?.id;
+    const userId = '684ad628bbc58354f55f40c8';
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -156,6 +157,7 @@ export const Delete_One_Task = async (req, res, next) => {
     const { taskId } = req.params;
     try {
         const task = await Task.findByIdAndDelete(taskId);
+        cancelNotification(taskId)
         return res.status(200).json({ success: true, message: "Task deleted successfully", task });
     } catch (error) {
         console.log(error.message);
@@ -165,8 +167,12 @@ export const Delete_One_Task = async (req, res, next) => {
 
 export const Update_Task = async (req, res, next) => {
     const { taskId } = req.params;
-    const userId = req?.auth.id;
+    // const userId = req?.auth.id;
+    const userId = '684ad628bbc58354f55f40c8'
     const updates = req.body;
+    console.log("Updatessssss--->",updates);
+    console.log('Update time-->', updates.dueDateTime);
+    console.log('Update status--->', updates.status);
     try {
         const fcmToken = req.body.fcmToken;
         if(fcmToken){
@@ -179,6 +185,12 @@ export const Update_Task = async (req, res, next) => {
             new: true,
             runValidators: true,
         });
+        if(updates.dueDateTime){
+            scheduleNotification(updatedTask, userId);
+        }
+        if(updates.status == 'completed'){
+            cancelNotification(updatedTask);
+        }
         return res.status(200).json({
             success: true,
             message: 'Task updated successfully',
@@ -216,7 +228,7 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
         const tasks = await Task.find({
             userId: userId,
             status: 'pending',
-            notifyType: 'dueDate',
+            // notifyType: 'dueDate',
             dueDateTime: { $gte: new Date() }
         }).sort({ dueDateTime: 1 }).skip(skip).limit(limit)
         const totalTasks = tasks.length;
