@@ -4,6 +4,7 @@ import Notification from '../models/notificationModel.js';
 import User from '../models/userModel.js';
 import firebaseAdmin from '../config/firebase.config.js';
 import mongoose from 'mongoose';
+import moment from 'moment';
 
 agenda.define('send task notification', async (job) => {
   let { taskId, userId } = job.attrs.data;
@@ -57,7 +58,8 @@ export const scheduleNotification = async (task, userId) => {
   
   // Schedule a new job if notifyAt is set
   if (task.notifyAt) {
-    await agenda.schedule(task.notifyAt, 'send task notification', {
+    const notify = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
+    await agenda.schedule(notify, 'send task notification', {
       taskId: task._id,
       userId,
     });

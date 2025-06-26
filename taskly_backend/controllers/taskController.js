@@ -4,6 +4,7 @@ import Notification from '../models/notificationModel.js';
 import haversine from 'haversine-distance';
 import firebaseAdmin from '../config/firebase.config.js';
 import { scheduleNotification, cancelNotification } from '../utils/scheduler.js';
+import moment from 'moment';
 
 export const Create_New_Task = async (req, res, next) => {
     const { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
@@ -14,14 +15,12 @@ export const Create_New_Task = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
         let notifyAt = null;
-        if(date && notifyType == 'dueDate' ){
-            const due = new Date(date);
-            // notifyAt = new Date(due.getTime() - 12 * 60 * 60 * 1000);
-            notifyAt = new Date(due.getTime()-1 * 60 * 1000)
+        if (date && notifyType == 'dueDate') {
+            notifyAt = date;
         }
-        if(fcmToken){
+        if (fcmToken) {
             const userData = await User.findByIdAndUpdate(userId,
-                {fcmToken},
+                { fcmToken },
                 { new: true }
             );
         }
@@ -37,7 +36,7 @@ export const Create_New_Task = async (req, res, next) => {
             address,
             notifyAt
         };
-        
+
         const newTask = await Task.create(taskData);
 
         scheduleNotification(newTask, userId);
@@ -170,25 +169,29 @@ export const Update_Task = async (req, res, next) => {
     const userId = req?.auth.id;
     // const userId = '684ad628bbc58354f55f40c8'
     const updates = req.body;
-    console.log("Updatessssss--->",updates);
+    console.log("Updatessssss--->", updates);
     console.log('Update time-->', updates.dueDateTime);
     console.log('Update status--->', updates.status);
     try {
         const fcmToken = req.body.fcmToken;
-        if(fcmToken){
+        if (fcmToken) {
             const userData = await User.findByIdAndUpdate(userId,
-                {fcmToken},
+                { fcmToken },
                 { new: true }
             )
+        }
+        if(updates.dueDateTime){
+            const notifyAt = updates.dueDateTime;
+            updates.notifyAt = notifyAt;
         }
         const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
             new: true,
             runValidators: true,
         });
-        if(updates.dueDateTime){
+        if (updates.dueDateTime) {
             scheduleNotification(updatedTask, userId);
         }
-        if(updates.status == 'completed'){
+        if (updates.status == 'completed') {
             cancelNotification(updatedTask);
         }
         return res.status(200).json({
@@ -242,7 +245,7 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
         })
     } catch (error) {
         console.log('Error in Task Priority ', error.message);
-        res.status(500).json({message:"Internal Server Error", success: false});
+        res.status(500).json({ message: "Internal Server Error", success: false });
     }
 }
 
@@ -271,13 +274,13 @@ export const Check_User_Task_Radius = async (req, res, next) => {
                     userId,
                     taskId: task._id,
                     title,
-                    message:messageBody,
+                    message: messageBody,
                     messageId
                 })
-                return res.status(200).json({message:"Notification sent successfully!", success:true, task});
+                return res.status(200).json({ message: "Notification sent successfully!", success: true, task });
             }
         }
-        return res.status(404).json({message:"No task found on current location", success: false});
+        return res.status(404).json({ message: "No task found on current location", success: false });
     } catch (error) {
         console.log('Error in Task Radius', error.message);
         return res.status(500).json({ message: "Internal Server Error", success: false });
@@ -287,7 +290,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
 export const Search_User_Task = async (req, res) => {
     try {
         const userId = req.auth?.id;
-        const { query = ''} = req.query;
+        const { query = '' } = req.query;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
