@@ -63,7 +63,7 @@ export const scheduleNotification = async (task, userId) => {
       taskId: task._id,
       userId,
     });
-    console.log(`Notification scheduled for task ${task._id} at ${task.notifyAt}`);
+    console.log(`Notification scheduled for task ${task._id} at ${notify}`);
   }
 };
 
