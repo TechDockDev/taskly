@@ -14,9 +14,11 @@ export const Create_New_Task = async (req, res, next) => {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
+        console.log("Task Body--->", req.body);
         let notifyAt = null;
         if (date && notifyType == 'dueDate') {
             notifyAt = date;
+            console.log("notifyAt==>", notifyAt);
         }
         if (fcmToken) {
             const userData = await User.findByIdAndUpdate(userId,
@@ -36,7 +38,7 @@ export const Create_New_Task = async (req, res, next) => {
             address,
             notifyAt
         };
-
+        
         const newTask = await Task.create(taskData);
 
         scheduleNotification(newTask, userId);
