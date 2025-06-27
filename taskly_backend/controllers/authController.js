@@ -7,9 +7,9 @@ import sendEmail from '../utils/sendEmail.js';
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
-    const { idToken, fcmToken, photo } = req.body;
+    const { idToken, fcmToken, photo, name } = req.body;
     const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
-    const { uid, email, name, picture } = decodedToken;
+    const { uid, email, picture } = decodedToken;
     let user = await User.findOne({ email });
     if (!user) {
       user = await User.create({
