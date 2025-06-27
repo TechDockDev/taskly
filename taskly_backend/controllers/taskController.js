@@ -197,6 +197,9 @@ export const Update_Task = async (req, res, next) => {
         if (updates.dueDateTime && updates.status == 'pending') {
             scheduleNotification(updatedTask, userId);
         }
+        if (updates.status == 'pending') {
+            scheduleNotification(updatedTask, userId);
+        }
         if (updates.status == 'completed') {
             cancelNotification(updatedTask);
         }
