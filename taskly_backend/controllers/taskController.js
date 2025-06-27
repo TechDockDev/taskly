@@ -7,13 +7,17 @@ import { scheduleNotification, cancelNotification } from '../utils/scheduler.js'
 import moment from 'moment';
 
 export const Create_New_Task = async (req, res, next) => {
-    const { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
+    let { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
     const userId = req?.auth?.id;
     // const userId = '684ad628bbc58354f55f40c8';
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
+        console.log("Before time Changes-->", date);
+        const istTime = moment.tz(date, 'Asia/Kolkata'); // interpret as IST
+        date = istTime.toDate(); // convert to UTC
+        console.log("After TC-->", date);
         console.log("Task Body--->", req.body);
         let notifyAt = null;
         if (date && notifyType == 'dueDate') {
@@ -38,7 +42,7 @@ export const Create_New_Task = async (req, res, next) => {
             address,
             notifyAt
         };
-        
+
         const newTask = await Task.create(taskData);
 
         scheduleNotification(newTask, userId);
@@ -182,7 +186,7 @@ export const Update_Task = async (req, res, next) => {
                 { new: true }
             )
         }
-        if(updates.dueDateTime){
+        if (updates.dueDateTime) {
             const notifyAt = updates.dueDateTime;
             updates.notifyAt = notifyAt;
         }
@@ -190,7 +194,7 @@ export const Update_Task = async (req, res, next) => {
             new: true,
             runValidators: true,
         });
-        if (updates.dueDateTime) {
+        if (updates.dueDateTime && updates.status == 'pending') {
             scheduleNotification(updatedTask, userId);
         }
         if (updates.status == 'completed') {
