@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/userModel.js'
 import Task from '../models/taskModel.js';
 import { v2 as cloudinary } from 'cloudinary'
+import firebaseAdmin from '../config/firebase.config.js';
 
 export const Get_Single_User = async (req, res) => {
     const { userId } = req.params;
@@ -23,6 +24,9 @@ export const Get_Single_User = async (req, res) => {
 export const Delete_User = async (req, res) => {
     const userId = req?.auth?.id;
     try {
+        const user  = await User.findById(userId);
+        const uid = user.firebaseUid;
+        await firebaseAdmin.auth().deleteUser(uid);  // Deleting from Firebase
         const [deletedTask, deletedUser] = await Promise.all([
             Task.deleteMany({ userId: userId }),
             User.deleteOne({ _id: userId })
