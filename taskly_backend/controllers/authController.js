@@ -2,8 +2,9 @@ import express from 'express';
 import firebaseAdmin from '../config/firebase.config.js';
 import User from '../models/userModel.js'
 import authToken from '../middleware/authToken.js';
-import sendEmail from '../utils/sendEmail.js';
-
+import {sendEmail} from '../utils/sendEmail.js';
+import emailVerificationTemplate from '../template/signupOtpMail.js';
+import bcrypt from 'bcrypt';
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
@@ -96,16 +97,60 @@ export const User_Register = async (req, res) => {
     if (userExist) {
       return res.status(400).json({ message: "User already Exists", success: false });
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
       name,
       email,
-      password
+      password: hashedPassword
     })
     return res.status(201).json({ message: "User created successfully", success: true, newUser });
   } catch (error) {
     console.log('Error in Register User: ', error.message);
     res.status(500).json({message:"Internal server Error", success:false});
   }
+};
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString(); 
+
+export const sendOTP = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const otp = generateOTP();
+  const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+
+  user.otp = otp;
+  user.otpExpiry = new Date(otpExpiry);
+  await user.save();
+
+  console.log("Ottpp=>", otp);
+  // Send OTP via email
+  const userName = user.name;
+  const htmlContent = emailVerificationTemplate({userName, otp})
+  console.log("HHHHHHHHHHtlm content-->", htmlContent);
+  console.log("Emaill->", email);
+  const subject = "subject"
+  sendEmail({email, subject, htmlContent});
+
+  res.json({ message: "OTP sent successfully" });
+};
+
+// verify otp logic
+export const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP",  success: false });
+    if (user.otpExpiry < new Date()) return res.status(400).json({ message: "OTP expired", success: false });
+
+    return res.status(200).json({ message: "OTP verified successfully", success: true });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({message:"Internal Server Error", success: false, error});
+  }
+  
 };
 
 export const forgotPassword = async (req, res) => {

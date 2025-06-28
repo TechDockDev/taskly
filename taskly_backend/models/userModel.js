@@ -8,7 +8,7 @@ const userSchema = new Schema({
     },
     firebaseUid: {
         type: String,
-        required: true
+        // required: true
     },
     email: {
         type: String,
@@ -33,6 +33,12 @@ const userSchema = new Schema({
     fcmToken: {
         type: String,
        // required: true
+    },
+    otp: {
+        type: String,
+    },
+    otpExpiry: {
+        type: Date
     }
 });
 
