@@ -2,9 +2,11 @@ import express from 'express';
 import firebaseAdmin from '../config/firebase.config.js';
 import User from '../models/userModel.js'
 import authToken from '../middleware/authToken.js';
-import {sendEmail} from '../utils/sendEmail.js';
+import { sendEmail } from '../utils/sendEmail.js';
 import emailVerificationTemplate from '../template/signupOtpMail.js';
+import forgotPasswordTemplate from '../template/forgotPasswordMail.js'
 import bcrypt from 'bcrypt';
+import otpModel from '../models/otpVerificationModel.js'
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
@@ -25,7 +27,7 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
           user._id,
           {
             fcmToken
-          }, {new:true}
+          }, { new: true }
         )
       }
     }
@@ -42,16 +44,18 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
 export const User_Signout = async (req, res) => {
   const userId = req.auth.id;
   const updateUser = await User.findByIdAndUpdate(
-      userId,
-      { fcmToken: "" },
-      { new: true }
-    );
+    userId,
+    { fcmToken: "" },
+    { new: true }
+  );
   res
     .status(200)
     .clearCookie("token")
     .json({ success: true, message: "Successfully Logged Out!" });
 };
 
+
+//Not in use
 export const User_Login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -87,6 +91,7 @@ export const User_Login = async (req, res) => {
   }
 };
 
+//Not in use
 export const User_Register = async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) {
@@ -102,100 +107,102 @@ export const User_Register = async (req, res) => {
       name,
       email,
       password: hashedPassword
-    })
-    return res.status(201).json({ message: "User created successfully", success: true, newUser });
+    });
+    await authToken.userSendToken(newUser, 200, res, "register");
+    // return res.status(201).json({ message: "User created successfully", success: true, newUser });
   } catch (error) {
     console.log('Error in Register User: ', error.message);
-    res.status(500).json({message:"Internal server Error", success:false});
+    res.status(500).json({ message: "Internal server Error", success: false });
   }
 };
 
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString(); 
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 export const sendOTP = async (req, res) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  const otp = generateOTP();
-  const otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes from now
-
-  user.otp = otp;
-  user.otpExpiry = new Date(otpExpiry);
-  await user.save();
-
-  console.log("Ottpp=>", otp);
-  // Send OTP via email
-  const userName = user.name;
-  const htmlContent = emailVerificationTemplate({userName, otp})
-  console.log("HHHHHHHHHHtlm content-->", htmlContent);
-  console.log("Emaill->", email);
-  const subject = "subject"
-  sendEmail({email, subject, htmlContent});
-
-  res.json({ message: "OTP sent successfully" });
-};
-
-// verify otp logic
-export const verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
   try {
-    const user = await User.findOne({ email });
-    if (!user || user.otp !== otp) return res.status(400).json({ message: "Invalid OTP",  success: false });
-    if (user.otpExpiry < new Date()) return res.status(400).json({ message: "OTP expired", success: false });
+    const { email, name } = req.body;
+    const otp = generateOTP();
+    const otpExpiry = Date.now() + 3 * 60 * 1000; // 3 minutes from now
 
-    return res.status(200).json({ message: "OTP verified successfully", success: true });
+    let user = await otpModel.findOne({ email });
+
+    if (!user) {
+      user = await otpModel.create({
+        email,
+        otp,
+        otpExpiry
+      });
+    } else {
+      user.otp = otp;
+      user.otpExpiry = new Date(otpExpiry);
+      await user.save();
+    }
+
+    const userName = name || "User"; 
+    const htmlContent = emailVerificationTemplate({ userName, otp });
+    const subject = "Taskly Email Verification OTP";
+
+    await sendEmail({ email, subject, htmlContent });
+
+    return res.status(200).json({ message: "OTP sent successfully", success: true });
+
   } catch (error) {
-    console.log(error.message);
-    return res.status(500).json({message:"Internal Server Error", success: false, error});
+    console.error("sendOTP error:", error);
+    return res.status(500).json({ message: "Failed to send OTP", success: false });
   }
-  
 };
 
+
+export const verifyOTP = async (req, res) => {
+  const {name, email, otp, password } = req.body;
+  try {
+    if (!name || !email || !otp || !password) {
+      return res.status(400).json({ message: "Email, OTP, and password are required", success: false });
+    }
+    const otpRecord = await otpModel.findOne({ email });
+    if (!otpRecord || otpRecord.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP", success: false });
+    }
+    if (otpRecord.otpExpiry < new Date()) {
+      return res.status(400).json({ message: "OTP expired", success: false });
+    }
+    await otpModel.deleteOne({ email });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let user = await User.findOne({ email });
+    const userRecord = await firebaseAdmin.auth().createUser({
+      email,
+      password,
+      emailVerified: true
+    });
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        firebaseUid:userRecord.uid,
+      });
+    }
+    await authToken.userSendToken(user, 200, res, "login");
+  } catch (error) {
+    console.error("verifyOTP error:", error);
+    return res.status(500).json({ message: "Internal Server Error", success: false });
+  }
+}
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ message: "Email is required", success: false });
-  }
-  const user = await User.findOne({ email });
+
   try {
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "User not found", success: false })
+      return res.status(404).json({ message: "User doesn't Exists", success: false });
     }
-    const resetToken = user.generateResetPasswordToken();
-    console.log(resetToken);
-    await user.save({ validateBeforeSave: false });
-
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-
-    const message = `
-      <h3>Hello ${user.name},</h3>
-      <p>You requested a password reset. Please click the link below to reset your password:</p>
-      <a href="${resetUrl}" target="_blank">${resetUrl}</a>
-      <p>This link will expire in 15 minutes.</p>
-    `
-    await sendEmail({
-      to: user.email,
-      subject: "Password Reset Request",
-      html: message
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Reset password link sent to your email"
-    });
-
+    const resetLink = await firebaseAdmin.auth().generatePasswordResetLink(email);
+    const htmlContent = forgotPasswordTemplate({ resetLink });
+    const subject = "Taskly Forget Password Link";
+    sendEmail({ email, subject, htmlContent });
+    res.status(200).json({ message: "Password reset link sent", success: true });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return res.status(500).json({
-      success: false,
-      message: "Error sending email",
-      error: error.message
-    });
+    console.error("Error sending password reset link:", error);
+    res.status(500).json({ message: "Failed to send password reset link", error: error.message, success: false });
   }
 }
