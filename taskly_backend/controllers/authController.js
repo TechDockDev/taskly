@@ -91,30 +91,6 @@ export const User_Login = async (req, res) => {
   }
 };
 
-//Not in use
-export const User_Register = async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "Provide all fields", success: false });
-  }
-  try {
-    const userExist = await User.findOne({ email });
-    if (userExist) {
-      return res.status(400).json({ message: "User already Exists", success: false });
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword
-    });
-    await authToken.userSendToken(newUser, 200, res, "register");
-    // return res.status(201).json({ message: "User created successfully", success: true, newUser });
-  } catch (error) {
-    console.log('Error in Register User: ', error.message);
-    res.status(500).json({ message: "Internal server Error", success: false });
-  }
-};
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
