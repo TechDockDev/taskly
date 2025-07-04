@@ -6,8 +6,21 @@ import firebaseAdmin from '../config/firebase.config.js';
 import mongoose from 'mongoose';
 import moment from 'moment';
 
-agenda.define('send task notification', async (job) => {
-  let { taskId, userId } = job.attrs.data;
+
+
+(async () => {
+  try {
+    console.log('Attempting to start Agenda...');
+    await agenda.start();
+    console.log('Agenda started successfully');
+  } catch (error) {
+    console.error('Error starting Agenda:', error);
+  }
+})();
+
+agenda.define('notify', async (job) => {
+  console.log('job=>', job);
+  let { taskId, userId, dataPayload } = job.attrs.data;
   console.log('taskId--->', taskId);
   taskId = taskId.toString()
   console.log('Converted Task Id-->', taskId);
@@ -19,18 +32,41 @@ agenda.define('send task notification', async (job) => {
     return;
   }
 
+  console.log("datapayload-->", dataPayload)
   const title = "Due Date Reminder";
   const messageBody = `Hey! Complete ${task.title} before it expires.`;
-  
-  try {
-    const messageId = await firebaseAdmin.messaging().send({
-      token: user.fcmToken,
-      notification: {
-        title: title,
-        body: messageBody,
-      },
-    });
+
+  let messages = {
+    token: user.fcmToken,
+    // notification: {
+    //   title: title,
+    //   body: messageBody,
+    // },
+    data: 
+      Object.fromEntries(
+        Object.entries(dataPayload).map(([key, value]) => [key, String(value)])
+      ),
     
+    // android: {
+    //   priority: 'high',
+    //   notification: {
+    //     channelId: '59054',
+    //     channelId: "alarm_channel",
+    //   }
+    // },
+    // apns: {
+    //   payload: {
+    //     aps: {
+    //       sound: 'alarm_sound.wav', // For iOS
+    //       'mutable-content': 1,
+    //       'content-available': 1,
+    //     },
+    //   },
+    // },
+  };
+  try {
+    const messageId = await firebaseAdmin.messaging().send(messages);
+    console.log("MessageId-->", messageId);
     const notification = await Notification.create({
       userId,
       taskId: task._id,
@@ -38,7 +74,8 @@ agenda.define('send task notification', async (job) => {
       message: messageBody,
       messageId,
     });
-    
+    console.log("After sending notification")
+
     console.log('Woooho Message sent successfully --->', notification);
   } catch (error) {
     console.error('Error sending notification:', error);
@@ -46,22 +83,32 @@ agenda.define('send task notification', async (job) => {
 });
 
 // Start Agenda
-(async () => {
-  await agenda.start();
-})();
+// (async () => {
+//   try {
+//     console.log('Attempting to start Agenda...');
+//     await agenda.start();
+//     console.log('Agenda started successfully');
+//   } catch (error) {
+//     console.error('Error starting Agenda:', error);
+//   }
+// })();
 
 export const scheduleNotification = async (task, userId) => {
-  // Cancel any existing job for this task to avoid duplicates
-  console.log("Taskkkk->>",task._id);
   const canceld = await agenda.cancel({ 'data.taskId': task._id });
-  console.log("Cancelled--->",canceld);
-  
-  // Schedule a new job if notifyAt is set
+  console.log("Cancelled--->", canceld);
   if (task.notifyAt) {
     const notify = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
-    await agenda.schedule(notify, 'send task notification', {
+    await agenda.schedule(notify, 'notify', {
       taskId: task._id,
       userId,
+      dataPayload: {
+        taskId: task._id,
+        notifyType: 'dueDate',
+        channelId:'alarm_channel',
+        title:"Due Date Reminder",
+        messageBody:`Hey! Complete ${task.title} before it expires.`,
+        taskType:'repeat'
+      }
     });
     console.log(`Notification scheduled for task ${task._id} at ${notify}`);
   }
