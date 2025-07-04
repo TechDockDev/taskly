@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import {User_SignIn_Or_SignUp, User_Login, User_Register, forgotPassword, User_Signout, sendOTP, verifyOTP} from '../controllers/authController.js';
+import {User_SignIn_Or_SignUp, User_Login, forgotPassword, User_Signout, sendOTP, verifyOTP} from '../controllers/authController.js';
 import { Get_Single_User, Delete_User, Update_User_Image, Update_Username, Remove_Tag_From_User, Add_Tag_To_User, Get_All_Tag_Of_User, Delete_User_Image } from "../controllers/userController.js";
 import authToken from "../middleware/authToken.js";
 import upload from "../middleware/upload.js";
@@ -11,9 +11,8 @@ const router = Router();
 // ============================= Auth Routes =========================
 router.route('/google/sign-in').post(User_SignIn_Or_SignUp)
 router.route('/sign-in').post(User_Login)
-router.route('/sign-up').post(User_Register)
 router.route('/send-otp').post(sendOTP)
-router.route('/verify-otp').post(verifyOTP);
+router.route('/sign-up').post(verifyOTP);
 router.route('/forgot-password').post(forgotPassword)
 router.route('/logout').post(authToken.isAuthenticated, User_Signout)
 // ====================================================================
@@ -37,7 +36,7 @@ router.route('/update/profile-image').post(
 )
 
 router.route('/delete/profile-image').delete(
-    // authToken.isAuthenticated,
+    authToken.isAuthenticated,
     Delete_User_Image
 )
 

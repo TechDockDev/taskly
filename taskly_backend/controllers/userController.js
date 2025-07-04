@@ -71,8 +71,7 @@ export const Update_User_Image = async (req, res) => {
 }
 
 export const Delete_User_Image = async (req, res) => {
-    // const userId = req.auth.id;
-    const userId = '683e9ffe0f487a7758d1eaad';
+    const userId = req?.auth?.id;
     try {
         const userData = await User.findById(userId);
         if (userData?.photo?.public_id) {
