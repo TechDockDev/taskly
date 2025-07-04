@@ -8,7 +8,9 @@ import {
     Task_Stats,
     Upcoming_Task_Priority,
     Check_User_Task_Radius,
-    Search_User_Task
+    Search_User_Task,
+    Snooze_Alaram,
+    Delete_Alarm,
 } from '../controllers/taskController.js'
 import { Create_Notification, Get_User_Notifications } from '../controllers/notificationController.js'
 import authToken from "../middleware/authToken.js";
@@ -67,6 +69,16 @@ router.route('/create-notification').post(
 router.route('/get-notifications').get(
     authToken.isAuthenticated,
     Get_User_Notifications
+)
+
+router.route('/snooze/:taskId').post(
+    authToken.isAuthenticated,
+    Snooze_Alaram
+)
+
+router.route('/delete-alarm/:taskId').post(
+    authToken.isAuthenticated,
+    Delete_Alarm
 )
 
 export default router;
