@@ -9,15 +9,12 @@ import moment from 'moment';
 export const Create_New_Task = async (req, res, next) => {
     let { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
     const userId = req?.auth?.id;
-    // const userId = '684ad628bbc58354f55f40c8';
     try {
         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
-        console.log("Before time Changes-->", date);
         const istTime = moment.tz(date, 'Asia/Kolkata'); // interpret as IST
         date = istTime.toDate(); // convert to UTC
-        console.log("After TC-->", date);
         console.log("Task Body--->", req.body);
         let notifyAt = null;
         if (date && notifyType == 'dueDate') {
@@ -173,7 +170,6 @@ export const Delete_One_Task = async (req, res, next) => {
 export const Update_Task = async (req, res, next) => {
     const { taskId } = req.params;
     const userId = req?.auth.id;
-    // const userId = '684ad628bbc58354f55f40c8'
     const updates = req.body;
     console.log("Updatessssss--->", updates);
     console.log('Update time-->', updates.dueDateTime);
@@ -198,7 +194,7 @@ export const Update_Task = async (req, res, next) => {
             scheduleNotification(updatedTask, userId);
         }
         if (updates.status == 'completed') {
-            cancelNotification(updatedTask);
+            cancelNotification(updatedTask._id);
         }
         return res.status(200).json({
             success: true,
@@ -224,7 +220,7 @@ export const Task_Stats = async (req, res, next) => {
         return res.status(200).json({ message: "All Tasks", success: true, stats });
     } catch (error) {
         console.log(error.message);
-        return res.status(500).json({ message: "Internal server Error", success: false });
+        return res.status(500).json({ message: "Internal server Error", success: false, error:error.message });
     }
 }
 
@@ -251,7 +247,7 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
         })
     } catch (error) {
         console.log('Error in Task Priority ', error.message);
-        res.status(500).json({ message: "Internal Server Error", success: false });
+        res.status(500).json({ message: "Internal Server Error", success: false, error:error.message });
     }
 }
 
@@ -330,3 +326,43 @@ export const Search_User_Task = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
+
+export const Snooze_Alaram = async (req, res) => {
+    const { taskId } = req.params;
+    const userId = req.auth.id;
+    if (!taskId || !userId) {
+        return res.status(400).json({ error: 'taskId and userId are required' });
+    }
+
+    try {
+        const task = {
+            _id: taskId,
+            notifyAt: moment.tz(new Date(), 'Asia/Kolkata').add(5, 'minutes').format('YYYY-MM-DD HH:mm')
+        };
+
+        await scheduleNotification(task, userId);
+
+        return res.status(200).json({
+            message: `Notification for task ${taskId} snoozed for 5 minutes`,
+            newNotifyAt: task.notifyAt
+        });
+    } catch (error) {
+        console.error('Error snoozing notification:', error);
+        return res.status(500).json({ error: 'Failed to snooze notification' });
+    }
+};
+
+export const Delete_Alarm = async (req, res) => {
+    const { taskId } = req.params;
+    console.log("Delete Alarm-->",taskId);
+    try {
+        if (!taskId) {
+            return res.status(400).json({ message: "Please provide taskID", success:false });
+        }
+        cancelNotification(taskId);
+        return res.status(200).json({message:"Notification canceled Successfully", success: true});
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).json({message:"Internal server Error", success: false});
+    }
+}
