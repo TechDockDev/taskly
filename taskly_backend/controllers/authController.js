@@ -145,19 +145,18 @@ export const verifyOTP = async (req, res) => {
     await otpModel.deleteOne({ email });
     const hashedPassword = await bcrypt.hash(password, 10);
     let user = await User.findOne({ email });
+    if(user) return res.status(400).json({message:"User already exists", success: false});
     const userRecord = await firebaseAdmin.auth().createUser({
       email,
       password,
       emailVerified: true
     });
-    if (!user) {
-      user = new User({
-        name,
-        email,
-        password: hashedPassword,
-        firebaseUid:userRecord.uid,
-      });
-    }
+    user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      firebaseUid:userRecord.uid,
+    })
     await authToken.userSendToken(user, 200, res, "login");
   } catch (error) {
     console.error("verifyOTP error:", error);
