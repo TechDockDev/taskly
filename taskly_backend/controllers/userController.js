@@ -45,14 +45,19 @@ export const Update_User_Image = async (req, res) => {
     }
     try {
         const userData = await User.findById(userId);
+        console.log("userData-->",userData);
         if (userData?.photo?.public_id) {
+            console.log("Inside userData-->")
             const result = await cloudinary.uploader.destroy(userData.photo.public_id);
             console.log(result);
         }
-
+        
         const imageUrl = req.file.path;
         const imagePublicId = req.file.filename;
 
+        console.log("Imah-->",imageUrl);
+        console.log("Imah pybic-->",imagePublicId);
+        
         const user = await User.findByIdAndUpdate(
             userId,
             {
@@ -63,6 +68,7 @@ export const Update_User_Image = async (req, res) => {
             },
             { new: true }
         );
+        console.log("Userrr-<",user)
         return res.status(200).json({ message: "Photos uploaded successfully", success: true, user })
     } catch (error) {
         console.log(error.message);
