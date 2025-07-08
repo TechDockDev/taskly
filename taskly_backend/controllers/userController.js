@@ -153,6 +153,11 @@ export const Remove_Tag_From_User = async (req, res) => {
     }
 
     try {
+        const checkTags =  await Task.findOne({userId, tag});
+        if(checkTags != null){
+            console.log("Help me! I am here")
+            return res.status(400).json({message:"Tag is associated with other task", success: false})
+        }
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $pull: { tags: tag } },
