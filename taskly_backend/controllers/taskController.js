@@ -329,31 +329,6 @@ export const Search_User_Task = async (req, res) => {
     }
 };
 
-export const Snooze_Alaram = async (req, res) => {
-    const { taskId } = req.params;
-    const userId = req.auth.id;
-    if (!taskId || !userId) {
-        return res.status(400).json({ error: 'taskId and userId are required' });
-    }
-
-    try {
-        const task = {
-            _id: taskId,
-            notifyAt: moment.tz(new Date(), 'Asia/Kolkata').add(5, 'minutes').format('YYYY-MM-DD HH:mm')
-        };
-
-        await scheduleNotification(task, userId);
-
-        return res.status(200).json({
-            message: `Notification for task ${taskId} snoozed for 5 minutes`,
-            newNotifyAt: task.notifyAt
-        });
-    } catch (error) {
-        console.error('Error snoozing notification:', error);
-        return res.status(500).json({ error: 'Failed to snooze notification' });
-    }
-};
-
 export const Delete_Alarm = async (req, res) => {
     const { taskId } = req.params;
     console.log("Delete Alarm-->",taskId);
