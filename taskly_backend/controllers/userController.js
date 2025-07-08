@@ -39,11 +39,15 @@ export const Delete_User = async (req, res) => {
 }
 
 export const Update_User_Image = async (req, res) => {
+    console.log("Insideeeeeee");
     const userId = req?.auth?.id;
     if (!req.file || !req.file.path || !req.file.filename) {
+        console.log("Insideeeeeee heeeeeeeeeeeeeere");
         return res.status(400).json({ error: "No image uploaded" });
     }
     try {
+            console.log("Insideeeeknjhujghfgfeee");
+
         const userData = await User.findById(userId);
         console.log("userData-->",userData);
         if (userData?.photo?.public_id) {
