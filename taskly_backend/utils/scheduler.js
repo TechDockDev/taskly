@@ -42,7 +42,7 @@ agenda.define('notify', async (job) => {
     //   title: title,
     //   body: messageBody,
     // },
-    priority:"high",
+    // priority:"high",
     data: 
       Object.fromEntries(
         Object.entries(dataPayload).map(([key, value]) => [key, String(value)])
@@ -83,37 +83,33 @@ agenda.define('notify', async (job) => {
   }
 });
 
-// Start Agenda
-// (async () => {
-//   try {
-//     console.log('Attempting to start Agenda...');
-//     await agenda.start();
-//     console.log('Agenda started successfully');
-//   } catch (error) {
-//     console.error('Error starting Agenda:', error);
-//   }
-// })();
-
 export const scheduleNotification = async (task, userId) => {
-  const canceld = await agenda.cancel({ 'data.taskId': task._id });
-  console.log("Cancelled--->", canceld);
-  if (task.notifyAt) {
-    const notify = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
-    await agenda.schedule(notify, 'notify', {
+  await agenda.cancel({ 'data.taskId': task._id });
+  if (!task.notifyAt) return;
+
+  const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
+
+  const jobData = {
+    taskId: task._id,
+    userId,
+    dataPayload: {
       taskId: task._id,
-      userId,
-      dataPayload: {
-        taskId: task._id,
-        notifyType: 'dueDate',
-        channelId:'alarm_channel',
-        title:"Due Date Reminder",
-        messageBody:`Hey! Complete ${task.title} before it expires.`,
-        taskType: task.ringType
-      }
-    });
-    console.log(`Notification scheduled for task ${task._id} at ${notify}`);
+      notifyType: 'dueDate',
+      channelId: 'alarm_channel',
+      title: "Due Date Reminder",
+      messageBody: `Hey! Complete ${task.title} before it expires.`,
+      taskType: task.ringType
+    }
+  };
+  if (task.ringType === 'repeat') {
+    await agenda.every('1 minute', 'notify', jobData, { startDate: notifyTime });
+    console.log(`Repeating notification scheduled every 5 minutes for task ${task._id} starting from ${notifyTime}`);
+  } else {
+    await agenda.schedule(notifyTime, 'notify', jobData);
+    console.log(`One-time notification scheduled for task ${task._id} at ${notifyTime}`);
   }
 };
+
 
 
 export const cancelNotification = async (taskId) => {
