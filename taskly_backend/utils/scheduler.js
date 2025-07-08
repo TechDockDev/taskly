@@ -42,7 +42,7 @@ agenda.define('notify', async (job) => {
     //   title: title,
     //   body: messageBody,
     // },
-    priority:"high",
+   // priority:"high",
     data: 
       Object.fromEntries(
         Object.entries(dataPayload).map(([key, value]) => [key, String(value)])
