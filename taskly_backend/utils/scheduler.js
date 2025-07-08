@@ -42,6 +42,7 @@ agenda.define('notify', async (job) => {
     //   title: title,
     //   body: messageBody,
     // },
+    priority:"high",
     data: 
       Object.fromEntries(
         Object.entries(dataPayload).map(([key, value]) => [key, String(value)])
@@ -107,7 +108,7 @@ export const scheduleNotification = async (task, userId) => {
         channelId:'alarm_channel',
         title:"Due Date Reminder",
         messageBody:`Hey! Complete ${task.title} before it expires.`,
-        taskType:'repeat'
+        taskType: task.ringType
       }
     });
     console.log(`Notification scheduled for task ${task._id} at ${notify}`);

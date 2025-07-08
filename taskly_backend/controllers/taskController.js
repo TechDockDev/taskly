@@ -168,44 +168,46 @@ export const Delete_One_Task = async (req, res, next) => {
 }
 
 export const Update_Task = async (req, res, next) => {
-    const { taskId } = req.params;
-    const userId = req?.auth.id;
-    const updates = req.body;
-    console.log("Updatessssss--->", updates);
-    console.log('Update time-->', updates.dueDateTime);
-    console.log('Update status--->', updates.status);
-    try {
-        const fcmToken = req.body.fcmToken;
-        if (fcmToken) {
-            const userData = await User.findByIdAndUpdate(userId,
-                { fcmToken },
-                { new: true }
-            )
-        }
-        if (updates.dueDateTime) {
-            const notifyAt = updates.dueDateTime;
-            updates.notifyAt = notifyAt;
-        }
-        const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
-            new: true,
-            runValidators: true,
-        });
-        if (updates.dueDateTime && updates.status == 'pending') {
-            scheduleNotification(updatedTask, userId);
-        }
-        if (updates.status == 'completed') {
-            cancelNotification(updatedTask._id);
-        }
-        return res.status(200).json({
-            success: true,
-            message: 'Task updated successfully',
-            updatedTask,
-        });
-    } catch (error) {
-        console.error('Error updating task:', err);
-        return res.status(500).json({ success: false, message: 'Server error' });
+  const { taskId } = req.params;
+  const userId = req?.auth.id;
+  const updates = req.body;
+
+  try {
+    if (updates.fcmToken) {
+      await User.findByIdAndUpdate(userId, { fcmToken: updates.fcmToken });
     }
-}
+    if (updates.dueDateTime && new Date(updates.dueDateTime) > new Date()) {
+      updates.notifyAt = updates.dueDateTime;
+    }
+    const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedTask) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+    const isPending = updates.status === 'pending';
+    const hasDueDate = updates.dueDateTime;
+    const isFutureDue = new Date(updatedTask.notifyAt) > new Date();
+    if (isPending && isFutureDue) {
+      scheduleNotification(updatedTask, userId);
+    }
+    if (updates.status === 'completed') {
+      cancelNotification(updatedTask._id);
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Task updated successfully',
+      updatedTask,
+    });
+  } catch (err) {
+    console.error('Error updating task:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
 
 export const Task_Stats = async (req, res, next) => {
     const userId = req?.auth?.id;
