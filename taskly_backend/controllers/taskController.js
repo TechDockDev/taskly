@@ -264,7 +264,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
             const userCoords = { lat: latitude, lon: longitude };
             const distance = haversine(userCoords, taskCoords);
             console.log('disatance--->', distance)
-            if (distance <= task.radius) {
+            if (distance <= task.radius && task.notifyType == 'nearby') {
                 const title = 'Task Nearby'
                 const messageBody = `You're near the task: ${task.title}`
                 const messageId = await firebaseAdmin.messaging().send({

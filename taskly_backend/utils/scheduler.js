@@ -84,8 +84,49 @@ agenda.define('notify', async (job) => {
   }
 });
 
+agenda.define('start-repeat-notification', async (job) => {
+  const jobData = job.attrs.data;
+
+  // Just in case, cancel any existing repeat jobs for this task
+  await agenda.cancel({ 'data.taskId': jobData.taskId });
+
+  // Start repeating every 1 minute
+  await agenda.every('1 minute', 'notify', jobData);
+  console.log(`Repeating notification started for task ${jobData.taskId}`);
+});
+
+
+// export const scheduleNotification = async (task, userId) => {
+//   await agenda.cancel({ 'data.taskId': task._id });
+//   if (!task.notifyAt) return;
+
+//   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
+
+//   const jobData = {
+//     taskId: task._id,
+//     userId,
+//     dataPayload: {
+//       taskId: task._id,
+//       notifyType: 'dueDate',
+//       channelId: 'alarm_channel',
+//       title: "Due Date Reminder",
+//       messageBody: `Hey! Complete ${task.title} before it expires.`,
+//       taskType: task.ringType
+//     }
+//   };
+//   if (task.ringType === 'repeat') {
+//     await agenda.every(`${process.env.REPEAT_TIME}`, 'notify', jobData, { startDate: notifyTime });
+//     console.log(`Repeating notification scheduled every 5 minutes for task ${task._id} starting from ${notifyTime}`);
+//   } else {
+//     await agenda.schedule(notifyTime, 'notify', jobData);
+//     console.log(`One-time notification scheduled for task ${task._id} at ${notifyTime}`);
+//   }
+// };
+
 export const scheduleNotification = async (task, userId) => {
+  // Cancel existing jobs for the same task
   await agenda.cancel({ 'data.taskId': task._id });
+
   if (!task.notifyAt) return;
 
   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
@@ -102,10 +143,13 @@ export const scheduleNotification = async (task, userId) => {
       taskType: task.ringType
     }
   };
+
   if (task.ringType === 'repeat') {
-    await agenda.every('1 minute', 'notify', jobData, { startDate: notifyTime });
-    console.log(`Repeating notification scheduled every 5 minutes for task ${task._id} starting from ${notifyTime}`);
+    // Schedule a one-time job at notifyTime to start repeating
+    await agenda.schedule(notifyTime, 'start-repeat-notification', jobData);
+    console.log(`Scheduled repeat start for task ${task._id} at ${notifyTime}`);
   } else {
+    // Schedule a one-time notification
     await agenda.schedule(notifyTime, 'notify', jobData);
     console.log(`One-time notification scheduled for task ${task._id} at ${notifyTime}`);
   }
