@@ -127,7 +127,7 @@ export const scheduleNotification = async (task, userId) => {
   // Cancel existing jobs for the same task
   await agenda.cancel({ 'data.taskId': task._id });
 
-  if (!task.notifyAt) return;
+  if (!task.notifyAt && !task.notifyType == 'dueDate') return;
 
   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
 
