@@ -86,12 +86,12 @@ const forgotPasswordTemplate = ({resetLink}) => {
   <body>
     <div class="email-container">
       <div class="email-header">
-        <h1>Taskly Account Security</h1>
+        <h1>Pingnear Account Security</h1>
       </div>
       <div class="email-body">
         <h2>Password Reset Request</h2>
         <p>Hello,</p>
-        <p>We received a request to reset the password associated with your <strong>Taskly</strong> account.</p>
+        <p>We received a request to reset the password associated with your <strong>Pingnear</strong> account.</p>
         <p>Click the button below to set a new password:</p>
         <p style="text-align: center;">
           <a href=${resetLink} class="cta-button" target="_blank">Reset My Password</a>
@@ -104,7 +104,7 @@ const forgotPasswordTemplate = ({resetLink}) => {
         </div>
       </div>
       <div class="email-footer">
-        &copy; 2025 Taskly. All rights reserved.<br />
+        &copy; 2025 Pingnear. All rights reserved.<br />
         Need help? Contact us at <a href="mailto:support@example.com" style="color:#004aad;">support@example.com</a>
       </div>
     </div>
