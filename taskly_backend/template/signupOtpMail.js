@@ -76,14 +76,14 @@ const emailVerificationTemplate = ({ userName, otp}) => {
     <body>
       <div class="container">
         <div class="logo">
-          <img src="cid:logoImage" alt="Taskly Logo">
+          <img src="cid:logoImage" alt="Pingnear Logo">
         </div>
         <div class="header">
           <h1>Email Verification</h1>
         </div>
         <div class="message">
           <p>Hi <strong>${userName}</strong>,</p>
-          <p>Thank you for signing up with <strong>Taskly</strong>!</p>
+          <p>Thank you for signing up with <strong>Pingnear</strong>!</p>
           <p>Please use the OTP below to verify your email address:</p>
         </div>
         <div class="otp">${otp}</div>
@@ -93,9 +93,9 @@ const emailVerificationTemplate = ({ userName, otp}) => {
         </div>
         
         <div class="footer">
-          <p>You received this email because you signed up for Taskly.</p>
-          <p><a href="https://yourdomain.com/privacy-policy">Privacy Policy</a></p>
-          <p>&copy; 2025 Taskly. All rights reserved.</p>
+          <p>You received this email because you signed up for Pingnear.</p>
+          <p><a href="https://support.taskly.themarketingmanagers.com/privacy_policy.html">Privacy Policy</a></p>
+          <p>&copy; 2025 Pingnear. All rights reserved.</p>
         </div>
       </div>
     </body>

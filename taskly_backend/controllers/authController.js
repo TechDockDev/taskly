@@ -116,7 +116,7 @@ export const sendOTP = async (req, res) => {
 
     const userName = name || "User"; 
     const htmlContent = emailVerificationTemplate({ userName, otp });
-    const subject = "Taskly Email Verification OTP";
+    const subject = "Pingnear Email Verification OTP";
 
     await sendEmail({ email, subject, htmlContent });
 
@@ -173,7 +173,7 @@ export const forgotPassword = async (req, res) => {
     }
     const resetLink = await firebaseAdmin.auth().generatePasswordResetLink(email);
     const htmlContent = forgotPasswordTemplate({ resetLink });
-    const subject = "Taskly Forget Password Link";
+    const subject = "Pingnear Forget Password Link";
     sendEmail({ email, subject, htmlContent });
     res.status(200).json({ message: "Password reset link sent", success: true });
   } catch (error) {
