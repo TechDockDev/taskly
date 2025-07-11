@@ -38,10 +38,10 @@ agenda.define('notify', async (job) => {
 
   let messages = {
     token: user.fcmToken,
-    // notification: {
-    //   title: title,
-    //   body: messageBody,
-    // },
+    notification: {
+      title: title,
+      body: messageBody,
+    },
     // priority:"high",
 
     data: 
@@ -49,22 +49,22 @@ agenda.define('notify', async (job) => {
         Object.entries(dataPayload).map(([key, value]) => [key, String(value)])
       ),
     
-    // android: {
-    //   priority: 'high',
-    //   notification: {
-    //     channelId: '59054',
-    //     channelId: "alarm_channel",
-    //   }
-    // },
-    // apns: {
-    //   payload: {
-    //     aps: {
-    //       sound: 'alarm_sound.wav', // For iOS
-    //       'mutable-content': 1,
-    //       'content-available': 1,
-    //     },
-    //   },
-    // },
+    android: {
+      priority: 'high',
+      notification: {
+        channelId: '59054',
+        channelId: "alarm_channel",
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: 'alarm_sound.wav', // For iOS
+          'mutable-content': 1,
+          'content-available': 1,
+        },
+      },
+    },
   };
   try {
     const messageId = await firebaseAdmin.messaging().send(messages);
