@@ -235,7 +235,7 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
         const tasks = await Task.find({
             userId: userId,
             status: 'pending',
-            // notifyType: 'dueDate',
+            notifyType: 'dueDate',
             dueDateTime: { $gte: new Date() }
         }).sort({ dueDateTime: 1 }).skip(skip).limit(limit)
         const totalTasks = tasks.length;

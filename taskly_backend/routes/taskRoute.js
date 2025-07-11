@@ -71,7 +71,6 @@ router.route('/get-notifications').get(
 )
 
 router.route('/delete-alarm/:taskId').post(
-    authToken.isAuthenticated,
     Delete_Alarm
 )
 

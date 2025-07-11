@@ -90,8 +90,8 @@ agenda.define('start-repeat-notification', async (job) => {
   // Just in case, cancel any existing repeat jobs for this task
   await agenda.cancel({ 'data.taskId': jobData.taskId });
 
-  // Start repeating every 1 minute
-  await agenda.every('1 minute', 'notify', jobData);
+  // Start repeating every 10 minutes
+  await agenda.every('10 minutes', 'notify', jobData);
   console.log(`Repeating notification started for task ${jobData.taskId}`);
 });
 
@@ -127,7 +127,7 @@ export const scheduleNotification = async (task, userId) => {
   // Cancel existing jobs for the same task
   await agenda.cancel({ 'data.taskId': task._id });
 
-  if (!task.notifyAt) return;
+  if (!task.notifyAt && !task.notifyType == 'dueDate') return;
 
   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
 
