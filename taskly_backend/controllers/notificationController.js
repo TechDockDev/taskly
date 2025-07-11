@@ -25,25 +25,33 @@ export const Get_User_Notifications = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    
+
     try {
-        const notifications = await Notification.find({
-            userId,
-        }).limit(limit).skip(skip).sort({ createdAt: -1 });
-        const totalNotifi = notifications.length;
+        const [totalNotifi, notifications] = await Promise.all([
+            Notification.countDocuments({ userId }),
+            Notification.find({ userId })
+                .limit(limit)
+                .skip(skip)
+                .sort({ createdAt: -1 }),
+        ]);
+
         return res.status(200).json({
-            message: "All Notifications", success: false, notifications, pagination: {
+            message: "All Notifications",
+            success: true,
+            notifications,
+            pagination: {
                 totalNotifications: totalNotifi,
                 currentPage: page,
                 totalPages: Math.ceil(totalNotifi / limit),
                 limit,
-            }
-        })
+            },
+        });
     } catch (error) {
-        console.log('Error in get notification:  ', error.message);
+        console.error('Error in get notification: ', error.message);
         return res.status(500).json({ message: "Internal Server Error", success: false });
     }
-}
+};
+
 
 export const Delete_User_Notification = async (req, res) => {
     const userId = req.auth.id;
