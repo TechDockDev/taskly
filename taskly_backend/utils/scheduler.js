@@ -281,7 +281,18 @@ export const scheduleNotification = async (task, userId) => {
     }
   };
   if (task.ringType === 'repeat') {
-    await agenda.every('1 minute', 'notify', jobData, { startDate: notifyTime });
+    // const heyy = await agenda.every({ startDate: notifyTime },'1 minute', 'notify', jobData);
+    const heyy = await agenda.every(
+    '1 minute',               // repeat interval
+    'notify',                 // job name
+    jobData,                  // job data
+    {
+      startDate: notifyTime, // first run time
+      skipImmediate: true    // optional: prevent immediate execution
+    }
+  );
+
+  console.log("heyy->", heyy);
     console.log(`Repeating notification scheduled every 5 minutes for task ${task._id} starting from ${notifyTime}`);
   } else {
     await agenda.schedule(notifyTime, 'notify', jobData);

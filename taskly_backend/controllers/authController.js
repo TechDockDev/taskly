@@ -97,6 +97,10 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
 export const sendOTP = async (req, res) => {
   try {
     const { email, name } = req.body;
+    const userExists = await User.findOne({email});
+    if(userExists){
+      return res.status(400).json({message:"User already exists", success:false});
+    }
     const otp = generateOTP();
     const otpExpiry = Date.now() + 3 * 60 * 1000; // 3 minutes from now
 
