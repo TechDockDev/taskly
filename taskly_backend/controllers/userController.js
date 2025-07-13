@@ -3,7 +3,8 @@ import User from '../models/userModel.js'
 import Task from '../models/taskModel.js';
 import { v2 as cloudinary } from 'cloudinary'
 import firebaseAdmin from '../config/firebase.config.js';
-
+import agenda from '../config/agenda.js';
+import Notification from '../models/notificationModel.js';
 export const Get_Single_User = async (req, res) => {
     const { userId } = req.params;
     if (!userId) {
@@ -22,16 +23,25 @@ export const Get_Single_User = async (req, res) => {
 }
 
 export const Delete_User = async (req, res) => {
-    const userId = req?.auth?.id;
+    // const userId = req?.auth?.id;
+    const userId = '686b4db1559ed1be5cb1fbbf';
     try {
-        const user  = await User.findById(userId);
-        const uid = user.firebaseUid;
-        await firebaseAdmin.auth().deleteUser(uid);  // Deleting from Firebase
-        const [deletedTask, deletedUser] = await Promise.all([
+        const user = await User.findById(userId);
+        const uid = user?.firebaseUid;
+        if (uid) {
+            await firebaseAdmin.auth().deleteUser(uid)
+                .catch(err => {
+                    console.error("Firebase deletion failed:", err.message);
+                });
+            ;  // Deleting from Firebase
+        }
+        const [deletedTask, deletedUser, deletedNotifications, cancelledJobs] = await Promise.all([
             Task.deleteMany({ userId: userId }),
-            User.deleteOne({ _id: userId })
+            User.deleteOne({ _id: userId }),
+            Notification.deleteMany({ userId }),
+            await agenda.cancel({ 'data.userId': userId })
         ]);
-        return res.status(200).json({ message: "User deleted successfully", success: true, deletedUser, deletedTask });;
+        return res.status(200).json({ message: "User deleted successfully", success: true, deletedUser, deletedTask, deletedNotifications, cancelledJobs });;
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Internal Server Error", success: false });
@@ -88,7 +98,7 @@ export const Delete_User_Image = async (req, res) => {
             const result = await cloudinary.uploader.destroy(userData.photo.public_id);
             console.log(result);
         }
-        const updatedUser = await User.findByIdAndUpdate(userId, 
+        const updatedUser = await User.findByIdAndUpdate(userId,
             {
                 photo: {
                     url: '',
@@ -97,10 +107,10 @@ export const Delete_User_Image = async (req, res) => {
             },
             { new: true }
         )
-        return res.status(200).json({message:"Profile Image Deleted Successfully", success:true});
+        return res.status(200).json({ message: "Profile Image Deleted Successfully", success: true });
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({message:"Internal Server Error", success:false});
+        res.status(500).json({ message: "Internal Server Error", success: false });
     }
 }
 
@@ -163,10 +173,10 @@ export const Remove_Tag_From_User = async (req, res) => {
     }
 
     try {
-        const checkTags =  await Task.findOne({userId, tag});
-        if(checkTags != null){
+        const checkTags = await Task.findOne({ userId, tag });
+        if (checkTags != null) {
             console.log("Help me! I am here")
-            return res.status(400).json({message:"Tag is associated with other task", success: false})
+            return res.status(400).json({ message: "Tag is associated with other task", success: false })
         }
         const updatedUser = await User.findByIdAndUpdate(
             userId,
