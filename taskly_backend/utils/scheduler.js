@@ -264,7 +264,7 @@ agenda.define('notify', async (job) => {
 
 export const scheduleNotification = async (task, userId) => {
   await agenda.cancel({ 'data.taskId': task._id });
-  if (!task.notifyAt) return;
+  if (!task.notifyAt || task.notifyType == 'nearby') return;
 
   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
 
@@ -281,9 +281,8 @@ export const scheduleNotification = async (task, userId) => {
     }
   };
   if (task.ringType === 'repeat') {
-    // const heyy = await agenda.every({ startDate: notifyTime },'1 minute', 'notify', jobData);
-    const heyy = await agenda.every(
-    '1 minute',               // repeat interval
+    await agenda.every(
+    '10 minutes',               // repeat interval
     'notify',                 // job name
     jobData,                  // job data
     {
@@ -292,8 +291,7 @@ export const scheduleNotification = async (task, userId) => {
     }
   );
 
-  console.log("heyy->", heyy);
-    console.log(`Repeating notification scheduled every 5 minutes for task ${task._id} starting from ${notifyTime}`);
+    console.log(`Repeating notification scheduled every 10 minutes for task ${task._id} starting from ${notifyTime}`);
   } else {
     await agenda.schedule(notifyTime, 'notify', jobData);
     console.log(`One-time notification scheduled for task ${task._id} at ${notifyTime}`);
