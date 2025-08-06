@@ -23,8 +23,7 @@ export const Get_Single_User = async (req, res) => {
 }
 
 export const Delete_User = async (req, res) => {
-    // const userId = req?.auth?.id;
-    const userId = '686b4db1559ed1be5cb1fbbf';
+    const userId = req?.auth?.id;
     try {
         const user = await User.findById(userId);
         const uid = user?.firebaseUid;

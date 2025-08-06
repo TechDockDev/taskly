@@ -286,8 +286,9 @@ export const scheduleNotification = async (task, userId) => {
     'notify',                 // job name
     jobData,                  // job data
     {
-      startDate: notifyTime, // first run time
-      skipImmediate: true    // optional: prevent immediate execution
+      // startDate: notifyTime, // first run time
+      skipImmediate: true,    // optional: prevent immediate execution
+      nextRunAt:notifyTime
     }
   );
 
