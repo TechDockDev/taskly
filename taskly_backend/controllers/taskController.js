@@ -189,7 +189,7 @@ export const Update_Task = async (req, res, next) => {
     const isPending = updates.status === 'pending';
     const hasDueDate = updates.dueDateTime;
     const isFutureDue = new Date(updatedTask.notifyAt) > new Date();
-    if (isPending && isFutureDue) {
+    if (isPending && isFutureDue && updatedTask.notifyType=='dueDate') {
       scheduleNotification(updatedTask, userId);
     }
     if (updates.status === 'completed') {
@@ -274,6 +274,17 @@ export const Check_User_Task_Radius = async (req, res, next) => {
             console.log('distance--->', distance)
             const now = new Date();
             console.log("Current Date---->", now);
+            console.log("Task Radius---->", task.radius);
+            console.log("Notify Type---->", task.notifyType);
+            if(new Date(task.notifyAt) >= now){
+                console.log("Time is greater than Current Time");
+            }
+            if(distance <= task.radius){
+                console.log("Distance is lesser than Task Radius");
+            }
+            if(task.notifyType == 'nearby'){
+                console.log("Notify Type is `Nearby`");
+            }
             if (distance <= task.radius && task.notifyType == 'nearby' && new Date(task.notifyAt) >= now) {
                 console.log("Inside if block----->");
                 const title = 'Task Nearby'
