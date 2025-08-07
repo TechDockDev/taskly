@@ -16,11 +16,11 @@ export const Create_New_Task = async (req, res, next) => {
         const istTime = moment.tz(date, 'Asia/Kolkata'); // interpret as IST
         date = istTime.toDate(); // convert to UTC
         console.log("Task Body--->", req.body);
-        let notifyAt = null;
-        if (date && notifyType == 'dueDate') {
-            notifyAt = date;
-            console.log("notifyAt==>", notifyAt);
-        }
+        let notifyAt = date;
+        // if (date && notifyType == 'dueDate') {
+        //     notifyAt = date;
+        //     console.log("notifyAt==>", notifyAt);
+        // }
         if (fcmToken) {
             const userData = await User.findByIdAndUpdate(userId,
                 { fcmToken },
@@ -168,45 +168,45 @@ export const Delete_One_Task = async (req, res, next) => {
 }
 
 export const Update_Task = async (req, res, next) => {
-  const { taskId } = req.params;
-  const userId = req?.auth.id;
-  const updates = req.body;
+    const { taskId } = req.params;
+    const userId = req?.auth.id;
+    const updates = req.body;
 
-  try {
-    if (updates.fcmToken) {
-      await User.findByIdAndUpdate(userId, { fcmToken: updates.fcmToken });
+    try {
+        if (updates.fcmToken) {
+            await User.findByIdAndUpdate(userId, { fcmToken: updates.fcmToken });
+        }
+        if (updates.dueDateTime && new Date(updates.dueDateTime) > new Date()) {
+            updates.notifyAt = updates.dueDateTime;
+        }
+        const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
+            new: true,
+            runValidators: true,
+        });
+        if (!updatedTask) {
+            return res.status(404).json({ success: false, message: 'Task not found' });
+        }
+        const isPending = updates.status === 'pending';
+        const hasDueDate = updates.dueDateTime;
+        const isFutureDue = new Date(updatedTask.notifyAt) > new Date();
+        if (isPending && isFutureDue && updatedTask.notifyType == 'dueDate') {
+            scheduleNotification(updatedTask, userId);
+        }
+        if (updates.status === 'completed') {
+            cancelNotification(updatedTask._id);
+        }
+        return res.status(200).json({
+            success: true,
+            message: 'Task updated successfully',
+            updatedTask,
+        });
+    } catch (err) {
+        console.error('Error updating task:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+        });
     }
-    if (updates.dueDateTime && new Date(updates.dueDateTime) > new Date()) {
-      updates.notifyAt = updates.dueDateTime;
-    }
-    const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedTask) {
-      return res.status(404).json({ success: false, message: 'Task not found' });
-    }
-    const isPending = updates.status === 'pending';
-    const hasDueDate = updates.dueDateTime;
-    const isFutureDue = new Date(updatedTask.notifyAt) > new Date();
-    if (isPending && isFutureDue && updatedTask.notifyType=='dueDate') {
-      scheduleNotification(updatedTask, userId);
-    }
-    if (updates.status === 'completed') {
-      cancelNotification(updatedTask._id);
-    }
-    return res.status(200).json({
-      success: true,
-      message: 'Task updated successfully',
-      updatedTask,
-    });
-  } catch (err) {
-    console.error('Error updating task:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error',
-    });
-  }
 };
 
 export const Task_Stats = async (req, res, next) => {
@@ -222,7 +222,7 @@ export const Task_Stats = async (req, res, next) => {
         return res.status(200).json({ message: "All Tasks", success: true, stats });
     } catch (error) {
         console.log(error.message);
-        return res.status(500).json({ message: "Internal server Error", success: false, error:error.message });
+        return res.status(500).json({ message: "Internal server Error", success: false, error: error.message });
     }
 }
 
@@ -249,7 +249,7 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
         })
     } catch (error) {
         console.log('Error in Task Priority ', error.message);
-        res.status(500).json({ message: "Internal Server Error", success: false, error:error.message });
+        res.status(500).json({ message: "Internal Server Error", success: false, error: error.message });
     }
 }
 
@@ -276,13 +276,14 @@ export const Check_User_Task_Radius = async (req, res, next) => {
             console.log("Current Date---->", now);
             console.log("Task Radius---->", task.radius);
             console.log("Notify Type---->", task.notifyType);
-            if(new Date(task.notifyAt) >= now){
+            console.log("Notify At--->", task.notifyAt);
+            if (new Date(task.notifyAt) >= now) {
                 console.log("Time is greater than Current Time");
             }
-            if(distance <= task.radius){
+            if (distance <= task.radius) {
                 console.log("Distance is lesser than Task Radius");
             }
-            if(task.notifyType == 'nearby'){
+            if (task.notifyType == 'nearby') {
                 console.log("Notify Type is `Nearby`");
             }
             if (distance <= task.radius && task.notifyType == 'nearby' && new Date(task.notifyAt) >= now) {
@@ -294,6 +295,30 @@ export const Check_User_Task_Radius = async (req, res, next) => {
                     notification: {
                         title: title,
                         body: messageBody,
+                    },
+                    data: {
+                        taskId: String(task._id),
+                        notifyType: 'dueDate',
+                        channelId: 'alarm_channel',
+                        title: 'Nearby Reminder',
+                        messageBody: `You're near the task: ${task.title}`,
+                        taskType: String(task.ringType),
+                    },
+                    android: {
+                        priority: 'high',
+                        notification: {
+                            channelId: '59054',
+                            channelId: "alarm_channel",
+                        }
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                sound: 'alarm_sound.wav', // For iOS
+                                'mutable-content': 1,
+                                'content-available': 1,
+                            },
+                        },
                     },
                 });
                 console.log("message Id---->", messageId);
@@ -355,15 +380,15 @@ export const Search_User_Task = async (req, res) => {
 
 export const Delete_Alarm = async (req, res) => {
     const { taskId } = req.params;
-    console.log("Delete Alarm-->",taskId);
+    console.log("Delete Alarm-->", taskId);
     try {
         if (!taskId) {
-            return res.status(400).json({ message: "Please provide taskID", success:false });
+            return res.status(400).json({ message: "Please provide taskID", success: false });
         }
         cancelNotification(taskId);
-        return res.status(200).json({message:"Notification canceled Successfully", success: true});
+        return res.status(200).json({ message: "Notification canceled Successfully", success: true });
     } catch (error) {
         console.log(error.message);
-        return res.status(500).json({message:"Internal server Error", success: false});
+        return res.status(500).json({ message: "Internal server Error", success: false });
     }
 }
