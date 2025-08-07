@@ -254,18 +254,28 @@ export const Upcoming_Task_Priority = async (req, res, next) => {
 }
 
 export const Check_User_Task_Radius = async (req, res, next) => {
+    console.log("Req----->", req.body);
     const { latitude, longitude } = req.body;
+    console.log('Latiii->>', latitude);
+    console.log("Longiii----->", longitude);
     const userId = req?.auth?.id;
+    console.log("UserId---->", userId);
     const user = await User.findById(userId);
+    console.log("User--->", user);
     try {
         const tasks = await Task.find({ userId: userId, status: 'pending', notifyType: 'nearby' });
         for (let task of tasks) {
+            console.log("Task---->", task);
             const taskCoords = { lat: task.location.latitude, lon: task.location.longitude };
+            console.log("Task Cordinate---->", taskCoords);
             const userCoords = { lat: latitude, lon: longitude };
+            console.log("User cords--->", userCoords);
             const distance = haversine(userCoords, taskCoords);
             console.log('distance--->', distance)
             const now = new Date();
+            console.log("Current Date---->", now);
             if (distance <= task.radius && task.notifyType == 'nearby' && new Date(task.notifyAt) >= now) {
+                console.log("Inside if block----->");
                 const title = 'Task Nearby'
                 const messageBody = `You're near the task: ${task.title}`
                 const messageId = await firebaseAdmin.messaging().send({
@@ -275,6 +285,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
                         body: messageBody,
                     },
                 });
+                console.log("message Id---->", messageId);
                 const notify = await Notification.create({
                     userId,
                     taskId: task._id,
@@ -282,6 +293,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
                     message: messageBody,
                     messageId
                 })
+                console.log("Notif---->", notify);
                 return res.status(200).json({ message: "Notification sent successfully!", success: true, task });
             }
         }
