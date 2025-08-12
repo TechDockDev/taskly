@@ -267,7 +267,7 @@ export const scheduleNotification = async (task, userId) => {
   if (!task.notifyAt || task.notifyType == 'nearby') return;
 
   const notifyTime = moment.tz(task.notifyAt, 'YYYY-MM-DD HH:mm', 'Asia/Kolkata').toDate();
-
+  console.log('Notifyyy--->', notifyTime);
   const jobData = {
     taskId: task._id,
     userId,
@@ -281,16 +281,23 @@ export const scheduleNotification = async (task, userId) => {
     }
   };
   if (task.ringType === 'repeat') {
-    await agenda.every(
-    '10 minutes',               // repeat interval
-    'notify',                 // job name
-    jobData,                  // job data
-    {
-      // startDate: notifyTime, // first run time
-      skipImmediate: true,    // optional: prevent immediate execution
-      nextRunAt:notifyTime
-    }
-  );
+  //   await agenda.every(
+  //   '10 minutes',               // repeat interval
+  //   'notify',                 // job name
+  //   jobData,                  // job data
+  //   {
+  //     startDate: notifyTime, // first run time
+  //     skipImmediate: true,    // optional: prevent immediate execution
+  //     nextRunAt:notifyTime
+  //   }
+  // );
+
+
+    const job = agenda.create('notify', jobData);
+    job.repeatEvery('10 minutes', { skipImmediate: true }); // only valid options here
+    job.attrs.nextRunAt = notifyTime; // this sets the first run time
+    await job.save();
+
 
     console.log(`Repeating notification scheduled every 10 minutes for task ${task._id} starting from ${notifyTime}`);
   } else {
