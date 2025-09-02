@@ -5,6 +5,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import firebaseAdmin from '../config/firebase.config.js';
 import agenda from '../config/agenda.js';
 import Notification from '../models/notificationModel.js';
+import mongoose from 'mongoose';
 export const Get_Single_User = async (req, res) => {
     const { userId } = req.params;
     if (!userId) {
@@ -124,69 +125,180 @@ export const Update_Username = async (req, res) => {
     }
 }
 
+// export const Add_Tag_To_User = async (req, res) => {
+//     const userId = req?.auth?.id;
+//     const { tag } = req.body;
+//     console.log("Body---->",req.body);
+//     if (!userId || !tag) {
+//         return res.status(400).json({ message: "userId and tag are required", success: false });
+//     }
+
+//     try {
+//         const updatedUser = await User.findByIdAndUpdate(
+//             userId,
+//             { $addToSet: { tags: tag } },
+//             { new: true }
+//         );
+
+//         if (!updatedUser) {
+//             return res.status(404).json({ message: "User not found", success: false });
+//         }
+
+//         res.status(200).json({
+//             message: "Tag added successfully (if not already present)",
+//             tags: updatedUser.tags
+//         });
+//     } catch (error) {
+//         console.error("Error adding tag:", error);
+//         res.status(500).json({ message: "Internal server error" });
+//     }
+// }
+
+
 export const Add_Tag_To_User = async (req, res) => {
-    const userId = req?.auth?.id;
+  try {
+    const userId = req?.user?.id || req?.auth?.id;
     const { tag } = req.body;
 
-    if (!userId || !tag) {
-        return res.status(400).json({ message: "userId and tag are required", success: false });
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized: No user ID found" });
     }
 
-    try {
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { $addToSet: { tags: tag } },
-            { new: true }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found", success: false });
-        }
-
-        res.status(200).json({
-            message: "Tag added successfully (if not already present)",
-            tags: updatedUser.tags
-        });
-    } catch (error) {
-        console.error("Error adding tag:", error);
-        res.status(500).json({ message: "Internal server error" });
+    if (!tag || typeof tag !== "string" || !tag.trim()) {
+      return res.status(400).json({ success: false, message: "Tag must be a non-empty string" });
     }
-}
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Prepare the tag object
+    const newTag = {
+      _id: new mongoose.Types.ObjectId(),
+      label: tag.trim(),
+      type: "custom"
+    };
+
+    // Add only if not already present
+    if (!user.tags.some(t => t.label.toLowerCase() === newTag.label.toLowerCase())) {
+      user.tags.push(newTag);
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Custom tag added successfully",
+      tags: newTag,
+    });
+  } catch (error) {
+    console.error("Error adding tag:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
+
+// export const Remove_Tag_From_User = async (req, res) => {
+//     const userId = req?.auth?.id;
+//     const { tag } = req.body;
+
+//     if (!userId || !tag) {
+//         return res.status(400).json({ message: "userId and tag are required", success: false });
+//     }
+
+//     try {
+//         const checkTags = await Task.findOne({ userId, tag });
+//         if (checkTags != null) {
+//             console.log("Help me! I am here")
+//             return res.status(400).json({ message: "Tag is associated with other task", success: false })
+//         }
+//         const updatedUser = await User.findByIdAndUpdate(
+//             userId,
+//             { $pull: { tags: tag } },
+//             { new: true }
+//         );
+
+//         if (!updatedUser) {
+//             return res.status(404).json({ message: "User not found", success: false });
+//         }
+
+//         res.status(200).json({
+//             message: "Tag removed successfully (if it existed)",
+//             success: true,
+//             tags: updatedUser.tags
+//         });
+//     } catch (error) {
+//         console.error("Error removing tag:", error);
+//         res.status(500).json({ message: "Internal server error", success: false });
+//     }
+// }
 
 export const Remove_Tag_From_User = async (req, res) => {
+  try {
     const userId = req?.auth?.id;
-    const { tag } = req.body;
+    const { tagId } = req.body;
 
-    if (!userId || !tag) {
-        return res.status(400).json({ message: "userId and tag are required", success: false });
+    if (!userId || !tagId) {
+      return res.status(400).json({ success: false, message: "userId and tagId are required" });
     }
 
-    try {
-        const checkTags = await Task.findOne({ userId, tag });
-        if (checkTags != null) {
-            console.log("Help me! I am here")
-            return res.status(400).json({ message: "Tag is associated with other task", success: false })
-        }
-        const updatedUser = await User.findByIdAndUpdate(
-            userId,
-            { $pull: { tags: tag } },
-            { new: true }
-        );
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found", success: false });
-        }
-
-        res.status(200).json({
-            message: "Tag removed successfully (if it existed)",
-            success: true,
-            tags: updatedUser.tags
-        });
-    } catch (error) {
-        console.error("Error removing tag:", error);
-        res.status(500).json({ message: "Internal server error", success: false });
+    // ✅ Make sure it's a valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(tagId)) {
+      return res.status(400).json({ success: false, message: "Invalid tagId" });
     }
-}
+
+    // ✅ Fetch the user with the tag
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // ✅ Find the tag inside user's tags array
+    const tag = user.tags.id(tagId);
+    if (!tag) {
+      return res.status(404).json({ success: false, message: "Tag not found" });
+    }
+
+    // ✅ Block predefined tags from being deleted
+    if (tag.type !== "custom") {
+      return res.status(400).json({
+        success: false,
+        message: "Predefined tags cannot be deleted",
+      });
+    }
+
+    // ✅ Check if tag is associated with a task
+    const checkTag = await Task.findOne({ userId, "tag._id": tagId });
+    if (checkTag) {
+      return res.status(400).json({
+        success: false,
+        message: "Tag is associated with other task",
+      });
+    }
+
+    // ✅ Remove tag only if it's custom
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { tags: { _id: new mongoose.Types.ObjectId(tagId), type: "custom" } } },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Custom tag removed successfully",
+      tags: updatedUser.tags,
+    });
+  } catch (error) {
+    console.error("Error removing tag:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
 
 export const Get_All_Tag_Of_User = async (req, res) => {
     const userId = req?.auth?.id;
