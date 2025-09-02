@@ -1,5 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+
+const tagSchema = new Schema({
+    label: { type: String, required: true },
+    type: { type: String, enum: ["predefined", "custom"], default: "custom" }
+});
+
 
 const userSchema = new Schema({
     name: {
@@ -27,7 +34,7 @@ const userSchema = new Schema({
         }
     },
     tags: {
-        type: [String],
+        type: [tagSchema],
         default: []
     },
     fcmToken: {
