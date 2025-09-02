@@ -5,61 +5,131 @@ import haversine from 'haversine-distance';
 import firebaseAdmin from '../config/firebase.config.js';
 import { scheduleNotification, cancelNotification } from '../utils/scheduler.js';
 import moment from 'moment';
+import mongoose from 'mongoose';
+
+// export const Create_New_Task = async (req, res, next) => {
+//     let { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
+//     const userId = req?.auth?.id;
+//     try {
+//         if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
+//             return res.status(400).json({ success: false, message: "Missing required fields" });
+//         }
+//         const istTime = moment.tz(date, 'Asia/Kolkata'); // interpret as IST
+//         date = istTime.toDate(); // convert to UTC
+//         console.log("Task Body--->", req.body);
+//         let notifyAt = date;
+//         // if (date && notifyType == 'dueDate') {
+//         //     notifyAt = date;
+//         //     console.log("notifyAt==>", notifyAt);
+//         // }
+//         if (fcmToken) {
+//             const userData = await User.findByIdAndUpdate(userId,
+//                 { fcmToken },
+//                 { new: true }
+//             );
+//         }
+//         const taskData = {
+//             title,
+//             tag,
+//             location,
+//             userId,
+//             dueDateTime: date ? new Date(date) : undefined,
+//             ringType: ringType || 'once',
+//             notifyType: notifyType || 'nearby',
+//             radius: radius || 100,
+//             address,
+//             notifyAt
+//         };
+
+//         const newTask = await Task.create(taskData);
+
+//         scheduleNotification(newTask, userId);
+//         console.log('Task scheduled successfully');
+
+//         return res.status(201).json({
+//             success: true,
+//             message: "Task created successfully",
+//             newTask
+//         });
+
+//     } catch (error) {
+//         console.error('Error creating task:', error);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Failed to create task",
+//             error: error.message
+//         });
+//     }
+// }
 
 export const Create_New_Task = async (req, res, next) => {
-    let { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
-    const userId = req?.auth?.id;
-    try {
-        if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
-            return res.status(400).json({ success: false, message: "Missing required fields" });
-        }
-        const istTime = moment.tz(date, 'Asia/Kolkata'); // interpret as IST
-        date = istTime.toDate(); // convert to UTC
-        console.log("Task Body--->", req.body);
-        let notifyAt = date;
-        // if (date && notifyType == 'dueDate') {
-        //     notifyAt = date;
-        //     console.log("notifyAt==>", notifyAt);
-        // }
-        if (fcmToken) {
-            const userData = await User.findByIdAndUpdate(userId,
-                { fcmToken },
-                { new: true }
-            );
-        }
-        const taskData = {
-            title,
-            tag,
-            location,
-            userId,
-            dueDateTime: date ? new Date(date) : undefined,
-            ringType: ringType || 'once',
-            notifyType: notifyType || 'nearby',
-            radius: radius || 100,
-            address,
-            notifyAt
-        };
+  let { title, tag, location, date, ringType, notifyType, radius, address, fcmToken } = req.body;
+  const userId = req?.auth?.id;
 
-        const newTask = await Task.create(taskData);
-
-        scheduleNotification(newTask, userId);
-        console.log('Task scheduled successfully');
-
-        return res.status(201).json({
-            success: true,
-            message: "Task created successfully",
-            newTask
-        });
-
-    } catch (error) {
-        console.error('Error creating task:', error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to create task",
-            error: error.message
-        });
+  try {
+    if (!title || !tag || !location || !location.latitude || !location.longitude || !address) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
-}
+
+    // ✅ Validate tagId
+    if (!mongoose.Types.ObjectId.isValid(tag)) {
+      return res.status(400).json({ success: false, message: "Invalid tagId" });
+    }
+
+    // ✅ Check if the tag belongs to this user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const tagExists = user.tags.some(t => t._id.toString() === tag);
+    if (!tagExists) {
+      return res.status(400).json({ success: false, message: "Tag not found for this user" });
+    }
+
+    // ✅ Convert date to IST → UTC
+    const istTime = moment.tz(date, "Asia/Kolkata");
+    date = istTime.toDate();
+
+    let notifyAt = date;
+
+    // ✅ Save fcmToken if provided
+    if (fcmToken) {
+      await User.findByIdAndUpdate(userId, { fcmToken }, { new: true });
+    }
+
+    // ✅ Store tagId instead of tag name
+    const taskData = {
+      title,
+      tag: new mongoose.Types.ObjectId(tag), // store reference
+      location,
+      userId,
+      dueDateTime: date ? new Date(date) : undefined,
+      ringType: ringType || "once",
+      notifyType: notifyType || "nearby",
+      radius: radius || 100,
+      address,
+      notifyAt,
+    };
+
+    const newTask = await Task.create(taskData);
+
+    scheduleNotification(newTask, userId);
+
+    return res.status(201).json({
+      success: true,
+      message: "Task created successfully",
+      newTask,
+    });
+  } catch (error) {
+    console.error("Error creating task:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create task",
+      error: error.message,
+    });
+  }
+};
 
 export const Get_Task_By_Id = async (req, res, next) => {
     const { taskId } = req.params;
