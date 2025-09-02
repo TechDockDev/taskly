@@ -1,56 +1,60 @@
 import mongoose, { Schema } from 'mongoose';
 
 const taskSchema = new Schema({
-    userId:{
-        type:mongoose.Types.ObjectId,
-        ref:"User",
+    userId: {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
     },
-    title:{
-        type:String,
+    title: {
+        type: String,
         required: true
     },
-    tag:{
-        type:String,
-        required:true
+    // tag:{
+    //     type:String,
+    //     required:true
+    // },
+    tag: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User.tags" 
     },
-    location:{
-        latitude:{
+    location: {
+        latitude: {
             type: String,
         },
-        longitude:{
+        longitude: {
             type: String,
         }
     },
-    address:{
-        type:String,
+    address: {
+        type: String,
         required: true
     },
-    dueDateTime:{
-        type:Date
+    dueDateTime: {
+        type: Date
     },
-    status:{
+    status: {
         type: String,
-        enum:["pending", "completed", "overdue"],
+        enum: ["pending", "completed", "overdue"],
         default: "pending"
     },
-    ringType:{
+    ringType: {
         type: String,
-        enum:["once", "repeat"],
-        default:"once",
+        enum: ["once", "repeat"],
+        default: "once",
     },
-    notifyType:{
+    notifyType: {
         type: String,
-        enum: ["nearby", "dueDate"], 
+        enum: ["nearby", "dueDate"],
         default: "nearby"
     },
-    notifyAt:{
-        type:Date,
+    notifyAt: {
+        type: Date,
     },
-    radius:{
-        type:Number,
-        default:100
+    radius: {
+        type: Number,
+        default: 100
     }
-},{timestamps:true});
+}, { timestamps: true });
 
 const taskModel = new mongoose.model('Task', taskSchema);
 

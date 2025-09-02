@@ -7,6 +7,7 @@ import emailVerificationTemplate from '../template/signupOtpMail.js';
 import forgotPasswordTemplate from '../template/forgotPasswordMail.js'
 import bcrypt from 'bcrypt';
 import otpModel from '../models/otpVerificationModel.js'
+import predefinedTags from "../config/predefinedTags.js";
 
 export const User_SignIn_Or_SignUp = async (req, res) => {
   try {
@@ -20,6 +21,10 @@ export const User_SignIn_Or_SignUp = async (req, res) => {
         email,
         name,
         photo: { url: picture || photo || "" },
+        tags: predefinedTags.map(tag => ({
+          label: tag,
+          type: "predefined"
+        }))
       });
     } else {
       if (fcmToken) {
@@ -160,6 +165,10 @@ export const verifyOTP = async (req, res) => {
       email,
       password: hashedPassword,
       firebaseUid:userRecord.uid,
+      tags: predefinedTags.map(tag => ({
+        label: tag,
+        type: "predefined"
+      }))
     })
     await authToken.userSendToken(user, 200, res, "login");
   } catch (error) {
