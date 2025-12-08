@@ -333,7 +333,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
     const user = await User.findById(userId);
     console.log("User--->", user);
     try {
-        const tasks = await Task.find({ userId: userId, status: 'pending', notifyType: 'nearby' });
+        const tasks = await Task.find({ userId: userId, status: 'pending', notifyType: 'nearby', isActive: true });
         for (let task of tasks) {
             console.log("Task---->", task);
             const taskCoords = { lat: task.location.latitude, lon: task.location.longitude };
@@ -356,7 +356,7 @@ export const Check_User_Task_Radius = async (req, res, next) => {
             if (task.notifyType == 'nearby') {
                 console.log("Notify Type is `Nearby`");
             }
-            if (distance <= task.radius && task.notifyType == 'nearby' && new Date(task.notifyAt) >= now) {
+            if (distance <= task.radius && task.notifyType == 'nearby' && new Date(task.notifyAt) >= now && task.isActive) {
                 console.log("Inside if block----->");
                 const title = 'Task Nearby'
                 const messageBody = `You're near the task: ${task.title}`
@@ -456,6 +456,7 @@ export const Delete_Alarm = async (req, res) => {
             return res.status(400).json({ message: "Please provide taskID", success: false });
         }
         cancelNotification(taskId);
+        await Task.findByIdAndUpdate(taskId, { isActive: false });
         return res.status(200).json({ message: "Notification canceled Successfully", success: true });
     } catch (error) {
         console.log(error.message);
