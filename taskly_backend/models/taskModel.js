@@ -9,10 +9,6 @@ const taskSchema = new Schema({
         type: String,
         required: true
     },
-    // tag:{
-    //     type:String,
-    //     required:true
-    // },
     tag: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User.tags" 
@@ -53,6 +49,10 @@ const taskSchema = new Schema({
     radius: {
         type: Number,
         default: 100
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
 
